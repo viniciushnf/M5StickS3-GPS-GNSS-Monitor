@@ -26,9 +26,9 @@ The firmware can display the following information:
 
 ### GPS/GNSS Connection
 
-The firmware uses the following M5StickS3 GPIOs for the GNSS module:
+The firmware uses the following M5StickS3 GPIOs for the GPS/GNSS module:
 
-| GNSS Module | M5StickS3 |
+| GPS Module | M5StickS3 |
 |---|---|
 | TX | GPIO 44 (RX) |
 | RX | GPIO 43 (TX) |
@@ -48,15 +48,15 @@ The **Average Moving Speed** is calculated from the accumulated route distance a
 
 ### Communication Timeout
 
-The firmware monitors valid GNSS time updates to detect communication problems.
+The firmware monitors valid GPS/GNSS time updates to detect communication problems.
 
-By default, a warning is shown when no valid GNSS time update is received for **15 seconds**. This timeout can be configured in the firmware settings.
+By default, a warning is shown when no valid GPS/GNSS time update is received for **15 seconds**. This timeout can be configured in the firmware settings.
 
 ### Configuration Settings
 
 The firmware includes configurable settings for:
 
-- GNSS baud rate
+- GPS/GNSS baud rate
 - Theme color
 - Coordinate format
 - Speed unit
@@ -66,8 +66,6 @@ The firmware includes configurable settings for:
 - Time format
 - Date format
 - Display brightness
-- GNSS communication timeout
-- Minimum moving speed
 
 ### Persistent Settings
 
@@ -106,11 +104,11 @@ In the Settings menu, Button B navigates between settings and Button A changes o
 
 ### Time and Timezone
 
-GNSS time is received in UTC and converted according to the configured timezone. The firmware also adjusts the calendar date when the timezone conversion crosses midnight.
+GPS/GNSS time is received in UTC and converted according to the configured timezone. The firmware also adjusts the calendar date when the timezone conversion crosses midnight.
 
-### Supported GNSS Modules
+### Supported GPS/GNSS Modules
 
-The firmware is designed to work with GNSS modules that provide standard NMEA data over UART.
+The firmware is designed to work with GPS/GNSS modules that provide standard NMEA data over UART.
 
 It was developed and tested with the **REYAX RYS352A**, but other compatible NMEA GPS/GNSS modules may also work when configured with a supported baud rate and connected to the correct UART pins.
 
@@ -188,7 +186,7 @@ After the upload is complete, restart the M5StickS3.
 
 Regardless of whether the firmware was installed through Arduino IDE or using the `.bin` file, the **first startup requires the user to select the baud rate of the GPS/GNSS module being used**.
 
-This is necessary because different GNSS modules may use different UART baud rates.
+This is necessary because different GPS/GNSS modules may use different UART baud rates.
 
 For example, if your module communicates at 115200 baud, select **115200** during the first startup configuration.
 
