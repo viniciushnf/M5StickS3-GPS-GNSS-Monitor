@@ -46,6 +46,7 @@ String theme_color_options_string[] = {"WHITE", "RED", "GREEN", "BLUE", "YELLOW"
 String units_speed_measurement_options[] = {"km/h", "mph", "knots", "m/s"};                            // Array of available speed measurement units
 // Array of available timezones
 String timezone_options[] = {"UTC-12:00", "UTC-11:00", "UTC-10:00", "UTC-09:30", "UTC-09:00", "UTC-08:00", "UTC-07:00", "UTC-06:00", "UTC-05:00", "UTC-04:00", "UTC-03:30", "UTC-03:00", "UTC-02:00", "UTC-01:00", "UTC+00:00", "UTC+01:00", "UTC+02:00", "UTC+03:00", "UTC+03:30", "UTC+04:00", "UTC+04:30", "UTC+05:00", "UTC+05:30", "UTC+05:45", "UTC+06:00", "UTC+06:30", "UTC+07:00", "UTC+08:00", "UTC+08:45", "UTC+09:00", "UTC+09:30", "UTC+10:00", "UTC+10:30", "UTC+11:00", "UTC+12:00", "UTC+12:45", "UTC+13:00", "UTC+14:00"};
+int screen_timeout_options[] = {0, 10, 30, 60, 300, 600};  // Screen timeout values in seconds
 
 bool new_gps_position = false;        // Indicates that a new valid GPS/GNSS position was received and trip/route data must be updated
 bool gps_serial_initialized = false;  // Variable that stores information on whether serial communication has already been initiated. Prevents calling end() on the UART before it has been initialized
@@ -96,10 +97,8 @@ struct struct_gps_time {  // Date and time structure with timezone and time stam
   int hour;
   int minute;
   int second;
-  unsigned long first_fix_millis;
-  unsigned long last_update_millis;
-  bool display_timeout_warning;
-  unsigned long last_millis_shown_warning_timeout;
+  unsigned long first_fix_millis;    // Stores the millis() value from the moment the first position was obtained
+  unsigned long last_update_millis;  // The millis() of the last update
 };
 
 struct struct_data_comparison {  // Structure for storing data for comparison
@@ -117,7 +116,14 @@ struct struct_data_comparison {  // Structure for storing data for comparison
   bool battery_charging;
 };
 
-struct struct_settings {
+struct struct_system_state {                        // Structure for storing temporary system states and user interaction timestamps
+  bool display_timeout_warning;                     // Stores information on whether the warning is being displayed
+  unsigned long last_millis_shown_warning_timeout;  // Store the value of the last time the notice was updated. The purpose is to know when to update again
+  unsigned long last_button_interaction_millis;     // Stores the time of the last button interaction
+  bool screen_on;                                   // Stores information on whether the screen is on
+};
+
+struct struct_settings {             // Structure for storing settings
   int module_baudrate;               // Selected Baud rate
   uint16_t theme_color;              // Variable to control the theme color of the application
   String coord_format;               // Variable for controlling the coordinate format. Decimal || DMS || DM
@@ -128,6 +134,7 @@ struct struct_settings {
   String time_format;                // Variable to control the time format. 24-hour || 12-hour
   String date_format;                // Variable to control the date format. YYYY-MM-DD || MM/DD/YYYY || DD/MM/YYYY
   byte screen_brightness;            // Screen brightness percentage. 100 = 100% brightness
+  int screen_timeout_seconds;        // Time in seconds for the screen to turn off when there is no button interaction
   int gps_timeout_seconds;           // Time in seconds to consider that the GPS/GNSS module has not sent new information for a long time
   double min_moving_speed;           // Minimum GPS/GNSS speed in km/h required to record route distance and moving time
 };
@@ -137,6 +144,7 @@ struct_gps_TripData gps_trip = {};
 struct_gps_time gps_time = {};
 struct_data_comparison data_comparison = {};
 struct_settings settings = {};
+struct_system_state system_state = {};
 
 TinyGPSPlus gps;                          // Creates the TinyGPSPlus object for parsing GPS/GNSS data
 HardwareSerial gps_serial(1);             // Creates a hardware UART serial interface on UART1
@@ -158,11 +166,12 @@ void setup() {
 
   load_settings();             // Function that retrieves persistent settings and saves them to variables
   if (!validate_settings()) {  // Checks if the settings are valid
-    save_settings();           // If any configuration is invalid, save the settings with valid parameters.
+    save_settings();           // If any configuration is invalid, save the settings with valid parameters
   }
 
   M5.Display.setTextColor(settings.theme_color);                             // Setting the text color to settings.theme_color
   M5.Display.setBrightness(percentage_to_byte(settings.screen_brightness));  // Set the screen brightness based on the percentage value
+  system_state.screen_on = true;                                             // Sets system_state.screen_on to true, which means the screen is on
 
   if (gps_serial_initialized) {  // Checks if a serial communication has already been initiated
     gps_serial.end();            // Closes the current UART configuration before applying the new baud rate
@@ -175,8 +184,9 @@ void setup() {
   );
   gps_serial_initialized = true;  // Sets gps_serial_initialized to true. If another serial communication needs to be initiated, the variable indicates that the previous one must be terminated
 
-  gps_data.hdop_quality = "No Fix";          // The HDOP quality is set to "No Fix".
-  gps_time.display_timeout_warning = false;  // gps_time.display_timeout_warning is set to false
+  gps_data.hdop_quality = "No Fix";                        // The HDOP quality is set to "No Fix"
+  system_state.display_timeout_warning = false;            // system_state.display_timeout_warning is set to false
+  system_state.last_button_interaction_millis = millis();  // Stores the value of millis() so that the screen timeout only starts counting at the end of setup()
 }
 
 void loop() {
@@ -187,7 +197,7 @@ void loop() {
     button_b_pressed = true;         // button_b_pressed is set to true
   }
 
-  if (settings_mode == false && gps_time.display_timeout_warning == false) {  // If configuration mode is disabled and the timeout warning is not to be displayed
+  if (settings_mode == false && system_state.display_timeout_warning == false) {  // If configuration mode is disabled and if the timeout warning is not displayed
     // Checks if button B has been released and button_b_pressed is true, or if button B is still pressed, if it has been pressed for longer than time_long_press_button_b and button_b_pressed is true
     if ((M5.BtnB.wasReleased() && button_b_pressed) || (M5.BtnB.isPressed() && millis() - button_b_press_time >= time_long_press_button_b && button_b_pressed)) {
       if (millis() - button_b_press_time < time_long_press_button_b) {  // If the time the button B was pressed is less than time_long_press_button_b
@@ -215,21 +225,40 @@ void loop() {
     draw_screen = true;  // indicates that the screen needs to be redrawn because there are GPS updates
   }
 
-  if (gps_time.last_update_millis != 0 && millis() - gps_time.last_update_millis >= (settings.gps_timeout_seconds * 1000)) {
-    if (millis() - gps_time.last_update_millis < ((settings.gps_timeout_seconds + 1) * 1000)) {
-      gps_time.display_timeout_warning = true;
+  // Checks if the screen timeout is enabled and if the time elapsed since the last button press exceeds the screen timeout
+  if (settings.screen_timeout_seconds > 0 && millis() - system_state.last_button_interaction_millis > (settings.screen_timeout_seconds * 1000)) {
+    if (system_state.screen_on) {      // If the screen is on
+      M5.Display.setBrightness(0);     // Sets the screen brightness to 0. this turns off the screen
+      system_state.screen_on = false;  // Indicates that the screen is off
     }
   } else {
-    if (gps_time.display_timeout_warning) {
-      toggle_screen = true;
-      draw_screen = true;
+    if (system_state.screen_on == false) {                                       // If the screen is off
+      M5.Display.setBrightness(percentage_to_byte(settings.screen_brightness));  // Set the screen brightness based on the percentage value
+      system_state.screen_on = true;                                             // Indicates that the screen is now on
+      draw_screen = true;                                                        // Set draw_screen to true to indicate that the screen needs to be redrawn
+      toggle_screen = true;                                                      // Set toggle_screen to true to indicate that the screen has been toggled
     }
-    gps_time.display_timeout_warning = false;
   }
 
-  if (gps_time.display_timeout_warning) {
-    if (millis() - gps_time.last_millis_shown_warning_timeout > 1000) {
-      gps_time.last_millis_shown_warning_timeout = millis();
+  // Checks if the time interval is greater than the time limit
+  if (gps_time.last_update_millis != 0 && millis() - gps_time.last_update_millis >= (settings.gps_timeout_seconds * 1000)) {
+    // Checks if the time interval is one second greater than the time limit
+    if (millis() - gps_time.last_update_millis < ((settings.gps_timeout_seconds + 1) * 1000)) {
+      system_state.display_timeout_warning = true;  // Enable Communication Warning
+    }
+  } else {
+    // If it was showing the warning and communication was restored
+    if (system_state.display_timeout_warning) {
+      toggle_screen = true;  // Enables indicating that the screen needs to be drawn
+      draw_screen = true;    // Enables indicating that the screen needs to be drawn
+    }
+    system_state.display_timeout_warning = false;  // Remove Communication Warning
+  }
+
+  if (system_state.display_timeout_warning) {  // Whether the warning should be displayed on the screen
+    // The screen must be redrawn every second to show the duration of the communication issues
+    if (millis() - system_state.last_millis_shown_warning_timeout > 1000) {
+      system_state.last_millis_shown_warning_timeout = millis();
       draw_screen = true;
     }
     if (draw_screen) {
@@ -239,17 +268,26 @@ void loop() {
       M5.Display.drawString("Communication", M5.Display.width() / 2, 35);
       M5.Display.drawString("Warning", M5.Display.width() / 2, 55);
       M5.Display.setTextSize(1);
-      M5.Display.drawString("No updates received for " + millis_to_time(millis() - gps_time.last_update_millis), M5.Display.width() / 2, 90);
+      M5.Display.drawString("No updates received for " + millis_to_time(millis() - gps_time.last_update_millis), M5.Display.width() / 2, 90);  // Shows the elapsed time
       M5.Display.drawString("Press Button A to dismiss", M5.Display.width() / 2, 115);
-      draw_screen = false;
+      draw_screen = false;  // draw_screen is set to false so the screen isn't drawn every time
     }
-    if (M5.BtnA.wasPressed()) {
-      gps_time.display_timeout_warning = false;
+    if (M5.BtnA.wasPressed()) {                      // If button A was pressed
+      system_state.display_timeout_warning = false;  // Dismiss the warning
       toggle_screen = true;
       draw_screen = true;
     }
   } else {
-    update_display();  // Function responsible for selecting which screen will be displayed
+    if (system_state.screen_on) {  // Checks if the screen is on
+      update_display();            // Function responsible for selecting which screen will be displayed
+    } else {
+      delay(25);  // Reduces loop frequency while the screen is off to help reduce power consumption
+    }
+  }
+
+  // Checks if any button has been pressed to determine when the screen should turn off, if the screen timeout is enabled
+  if (M5.BtnA.wasPressed() || M5.BtnA.wasReleased() || M5.BtnB.wasPressed() || M5.BtnB.wasReleased()) {
+    system_state.last_button_interaction_millis = millis();  // Stores the millis() value from when a button was pressed
   }
 }
 
@@ -296,9 +334,10 @@ void update_gps_data() {                // Function responsible for verifying an
     update_date_time();
     gps_time.last_update_millis = millis();  // Stores the millis() value where the last valid information was received
   }
+  // Defines the HDOP quality based on the HDOP value
   if (gps_data.hdop < 0.7) {
     if (gps_data.hdop == 0) {
-      gps_data.hdop_quality = "No Fix";
+      gps_data.hdop_quality = "No Fix";  // When the HDOP is 0, it means the variable holds its default value, indicating that no fix has been obtained since initialization
     } else {
       gps_data.hdop_quality = "Excellent";
     }
@@ -316,13 +355,13 @@ void update_gps_data() {                // Function responsible for verifying an
 void update_gps_trip() {  // Updates trip statistics using the current valid GPS/GNSS position
   if (gps_data.latitude != 0.0 && gps_data.longitude != 0.0) {
     if (gps_trip.trip_start_millis == 0) {
-      gps_trip.trip_start_millis = millis();
+      gps_trip.trip_start_millis = millis();  // Stores the trip start time
     }
     if (gps_trip.start_latitude == 0.0 && gps_trip.start_longitude == 0.0) {
       gps_trip.start_latitude = gps_data.latitude;
       gps_trip.start_longitude = gps_data.longitude;
     } else {
-      gps_trip.distance_from_start = TinyGPSPlus::distanceBetween(gps_trip.start_latitude, gps_trip.start_longitude, gps_data.latitude, gps_data.longitude);
+      gps_trip.distance_from_start = TinyGPSPlus::distanceBetween(gps_trip.start_latitude, gps_trip.start_longitude, gps_data.latitude, gps_data.longitude);  // Measures the distance between two points
     }
   }
   if (gps_data.altitude > gps_trip.max_altitude) {
@@ -407,7 +446,7 @@ void update_display() {  // Function responsible for selecting which screen will
     case 10:
       screen_settings();
       break;
-    default:  // If the screen_i index is not between 0 and 8, it goes to the general screen and screen_i resets to 0
+    default:  // If the screen_i index is not between 0 and 10, it goes to the general screen and screen_i resets to 0
       screen_general();
       screen_i = 0;
       break;
@@ -679,7 +718,7 @@ void screen_route_stats() {  // Displays the accumulated route distance and aver
       if (gps_trip.route_distance < 1000.0) {
         distance_str = String((int)gps_trip.route_distance) + " m";
       } else {
-        distance_str = String(gps_trip.route_distance / 1000.0, 1) + " km";
+        distance_str = String(gps_trip.route_distance / 1000.0, 2) + " km";
       }
     } else {
       double feet = gps_trip.route_distance * 3.28084;
@@ -915,7 +954,7 @@ void screen_settings() {
         screen_settings_i = screen_settings_i + 1;                      // 1 is added to the value of screen_settings_i
       } else {                                                          // If the time button B was held down is greater than or equal to time_long_press_button_b
         if (screen_settings_i == 0) {                                   // Checks if screen_settings_i is equal to 0
-          screen_settings_i = 11;                                       // screen_settings_i receives the value 11, which is the index of the last screen
+          screen_settings_i = 12;                                       // screen_settings_i receives the value 12, which is the index of the last screen
         } else {                                                        // If the value of screen_settings_i is not equal to 0
           screen_settings_i = screen_settings_i - 1;                    // 1 is subtracted from the value of screen_settings_i. Goes to the previous screen
         }
@@ -933,33 +972,36 @@ void screen_settings() {
         screen_settings_brightness();
         break;
       case 2:
-        screen_settings_coord_format();
+        screen_settings_screen_timeout();
         break;
       case 3:
-        screen_settings_unit_speed();
+        screen_settings_coord_format();
         break;
       case 4:
-        screen_settings_unit_altitude();
+        screen_settings_unit_speed();
         break;
       case 5:
-        screen_settings_unit_distance();
+        screen_settings_unit_altitude();
         break;
       case 6:
-        screen_settings_timezone();
+        screen_settings_unit_distance();
         break;
       case 7:
-        screen_settings_time_format();
+        screen_settings_timezone();
         break;
       case 8:
-        screen_settings_date_format();
+        screen_settings_time_format();
         break;
       case 9:
-        screen_settings_baudrate();
+        screen_settings_date_format();
         break;
       case 10:
-        screen_settings_reset_trip();
+        screen_settings_baudrate();
         break;
       case 11:
+        screen_settings_reset_trip();
+        break;
+      case 12:
         screen_settings_exit();
         break;
       default:
@@ -977,8 +1019,8 @@ void screen_settings() {
       M5.Display.drawString("button to enter", M5.Display.width() / 2, 75);
       M5.Display.drawString("the settings", M5.Display.width() / 2, 95);
     }
-    if (M5.BtnA.wasPressed()) {
-      settings_mode = true;
+    if (M5.BtnA.wasPressed()) {  // If button A is pressed
+      settings_mode = true;      // Enables configuration mode
       toggle_screen_settings = true;
       screen_settings_i = 0;
     }
@@ -1023,6 +1065,39 @@ void screen_settings_brightness() {
     screen_header("Brightness");
     show_defined_configuration(String(settings.screen_brightness) + "%");
     settings_footer("brightness");
+  }
+}
+
+void screen_settings_screen_timeout() {
+  byte selected_timeout_i = 0;
+  // Find the current timeout value in the available options
+  for (int i_timeout = 0; i_timeout < sizeof(screen_timeout_options) / sizeof(screen_timeout_options[0]); i_timeout++) {
+    if (screen_timeout_options[i_timeout] == settings.screen_timeout_seconds) {
+      selected_timeout_i = i_timeout;
+      break;
+    }
+  }
+  if (M5.BtnA.wasPressed()) {
+    selected_timeout_i = selected_timeout_i + 1;
+    if (selected_timeout_i >= sizeof(screen_timeout_options) / sizeof(screen_timeout_options[0])) {
+      selected_timeout_i = 0;
+    }
+    settings.screen_timeout_seconds = screen_timeout_options[selected_timeout_i];  // Apply the selected timeout value, stored internally in seconds
+    draw_screen = true;
+    save_settings();
+  }
+  String str_screen_timeout = "";
+  if (settings.screen_timeout_seconds == 0) {
+    str_screen_timeout = "Disabled";
+  } else if (settings.screen_timeout_seconds >= 60) {
+    str_screen_timeout = String(settings.screen_timeout_seconds / 60) + " minute" + (settings.screen_timeout_seconds >= 120 ? "s" : "");
+  } else {
+    str_screen_timeout = String(settings.screen_timeout_seconds) + " seconds";
+  }
+  if (draw_screen || toggle_screen_settings) {
+    screen_header("Screen Timeout");
+    show_defined_configuration(str_screen_timeout);
+    settings_footer("screen timeout");
   }
 }
 
@@ -1232,7 +1307,7 @@ void screen_header(String title) {  // Function responsible for drawing the head
   }
   M5.Display.fillRect(0, 25, 240, 110, BLACK);  // Draw a black square
   // Check if the timeout warning screen should not be displayed and if the timeout is longer than acceptable
-  if (gps_time.display_timeout_warning == false && millis() - gps_time.last_update_millis >= (settings.gps_timeout_seconds * 1000)) {
+  if (system_state.display_timeout_warning == false && millis() - gps_time.last_update_millis >= (settings.gps_timeout_seconds * 1000)) {
     M5.Display.fillTriangle(235, 130, 214, 130, 225, 109, YELLOW);  // Draw a yellow triangle
     M5.Display.setTextDatum(middle_center);
     M5.Display.setTextSize(2);
@@ -1516,6 +1591,7 @@ void set_default_settings() {  // Sets the default firmware configuration values
   settings.time_format = "24-hour";
   settings.date_format = "YYYY-MM-DD";
   settings.screen_brightness = 100;
+  settings.screen_timeout_seconds = screen_timeout_options[0];
   settings.gps_timeout_seconds = 15;
   settings.min_moving_speed = 1.0;
 }
@@ -1533,6 +1609,7 @@ void save_settings() {  // Saves the current configuration to NVS so it survives
   preferences.putString("time_format", settings.time_format);
   preferences.putString("date_format", settings.date_format);
   preferences.putUChar("brightness", settings.screen_brightness);
+  preferences.putInt("screen_timeout", settings.screen_timeout_seconds);
   preferences.putInt("gps_timeout", settings.gps_timeout_seconds);
   preferences.putDouble("min_speed", settings.min_moving_speed);
   preferences.end();
@@ -1559,6 +1636,7 @@ void load_settings() {                                           // Loads the sa
   settings.time_format = preferences.getString("time_format", "24-hour");
   settings.date_format = preferences.getString("date_format", "YYYY-MM-DD");
   settings.screen_brightness = preferences.getUChar("brightness", 100);
+  settings.screen_timeout_seconds = preferences.getInt("screen_timeout", screen_timeout_options[0]);
   settings.gps_timeout_seconds = preferences.getInt("gps_timeout", 15);
   settings.min_moving_speed = preferences.getDouble("min_speed", 1.0);
   preferences.end();
@@ -1643,6 +1721,19 @@ bool validate_settings() {     // Validates settings loaded from NVS and replace
       settings.screen_brightness > 100 ||
       settings.screen_brightness % 10 != 0) {
     settings.screen_brightness = 100;
+    settings_valid = false;
+  }
+  bool valid_screen_timeout = false;
+  for (int i = 0;
+       i < sizeof(screen_timeout_options) / sizeof(screen_timeout_options[0]);
+       i++) {
+    if (settings.screen_timeout_seconds == screen_timeout_options[i]) {
+      valid_screen_timeout = true;
+      break;
+    }
+  }
+  if (!valid_screen_timeout) {
+    settings.screen_timeout_seconds = screen_timeout_options[0];
     settings_valid = false;
   }
   if (settings.gps_timeout_seconds < 1 ||
