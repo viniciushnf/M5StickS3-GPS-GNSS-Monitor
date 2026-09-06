@@ -50,6 +50,7 @@ int screen_timeout_options[] = {0, 10, 30, 60, 300, 600};  // Screen timeout val
 
 bool new_gps_position = false;        // Indicates that a new valid GPS/GNSS position was received and trip/route data must be updated
 bool gps_serial_initialized = false;  // Variable that stores information on whether serial communication has already been initiated. Prevents calling end() on the UART before it has been initialized
+double last_speed_course = 0;         // Variable that stores the last speed value displayed on the course screen to determine whether the screen needs to be redrawn and the speed reset to 0
 
 struct struct_gps_data {  // Structure for storing data obtained by the GPS/GNSS module
   double latitude;
@@ -792,7 +793,7 @@ void screen_course() {
     float angle = gps_data.course * PI / 180.0;
     int endX = centerX + sin(angle) * pointerLength;
     int endY = centerY - cos(angle) * pointerLength;
-    if (data_comparison.line_course_x != endX || data_comparison.line_course_y != endY || toggle_screen) {
+    if (data_comparison.line_course_x != endX || data_comparison.line_course_y != endY || toggle_screen || (gps_data.speed < 1 && last_speed_course >= 1)) {
       if (data_comparison.line_course_x != 0 && data_comparison.line_course_y != 0) {
         M5.Display.drawWideLine(centerX, centerY, data_comparison.line_course_x, data_comparison.line_course_y, 5, settings.theme_color);
       }
@@ -843,6 +844,7 @@ void screen_course() {
       M5.Display.print(String(direction));
       M5.Display.setCursor(10, 90);
       M5.Display.print(convert_speed(gps_data.speed, true));
+      last_speed_course = gps_data.speed;
       M5.Display.fillRect(0, 110, 103, 25, settings.theme_color);
       M5.Display.setTextSize(2);
       M5.Display.setTextColor(BLACK);
