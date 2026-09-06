@@ -471,16 +471,31 @@ void screen_general() {
     M5.Display.setCursor(10, 65);
     M5.Display.setTextSize(1);
     M5.Display.print("SPEED: ");
+    int cursor_x_speed_unit = M5.Display.textWidth("SPEED: ");
     M5.Display.setTextSize(2);
-    M5.Display.println(convert_speed(gps_data.speed, false));
+    M5.Display.print(convert_speed(gps_data.speed, false));
+    cursor_x_speed_unit = cursor_x_speed_unit + M5.Display.textWidth(convert_speed(gps_data.speed, false));
+    M5.Display.setTextSize(1);
+    M5.Display.setCursor(13 + cursor_x_speed_unit, 72);
+    M5.Display.println(settings.units_speed_measurement);
     M5.Display.setCursor(130, 65);
     M5.Display.setTextSize(1);
     M5.Display.print("ALT: ");
+    int cursor_x_altitude_unit = M5.Display.textWidth("ALT: ");
     M5.Display.setTextSize(2);
     if (settings.unit_altitude_measurement == "Meters") {
-      M5.Display.println(gps_data.altitude, 0);
+      M5.Display.print(gps_data.altitude, 0);
+      cursor_x_altitude_unit = cursor_x_altitude_unit + M5.Display.textWidth(String(gps_data.altitude, 0));
     } else {
-      M5.Display.println(gps_data.altitude * 3.28084, 0);
+      M5.Display.print(gps_data.altitude * 3.28084, 0);
+      cursor_x_altitude_unit = cursor_x_altitude_unit + M5.Display.textWidth(String(gps_data.altitude * 3.28084, 0));
+    }
+    M5.Display.setTextSize(1);
+    M5.Display.setCursor(133 + cursor_x_altitude_unit, 72);
+    if (settings.unit_altitude_measurement == "Meters") {
+      M5.Display.println("m");
+    } else {
+      M5.Display.println("ft");
     }
     M5.Display.setCursor(10, 95);
     M5.Display.setTextSize(1);
@@ -1193,7 +1208,9 @@ void screen_settings_time_format() {
 void screen_settings_baudrate() {
   if (M5.BtnA.wasPressed()) {
     set_baudrate();
+    // Forces the screen to redraw
     draw_screen = true;
+    toggle_screen = true;
   }
   if (draw_screen || toggle_screen_settings) {
     screen_header("Baud Rate");
