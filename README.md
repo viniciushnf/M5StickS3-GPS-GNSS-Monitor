@@ -581,7 +581,7 @@ The firmware worked correctly during these tests.
 
 ---
 
-# 🐉 Bruce Firmware with GPS Info
+# 🦈 Bruce Firmware with GPS Info
 
 I also made available a **modified version of the Bruce firmware** that adds a dedicated:
 
