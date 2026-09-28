@@ -1,209 +1,632 @@
 # GPS & GNSS Monitor for M5StickS3
 
-GPS & GNSS Monitor is a firmware for the M5StickS3 designed to display and monitor real-time data received from a connected GPS/GNSS module.
+GPS & GNSS Monitor transforms your **M5StickS3** into a compact, real-time GPS/GNSS monitoring device.
 
-The firmware provides GNSS information, trip and route statistics, configurable display and measurement settings, and persistent configuration storage using the ESP32 NVS.
+Simply connect a compatible GPS or GNSS module through UART and the firmware can display your current position, satellite information, speed, altitude, distance traveled, course, date, time, and route statistics directly on the device.
 
-## About the Firmware
+It is designed for **portable navigation, GPS/GNSS testing, field monitoring, positioning experiments, and exploring GNSS data**.
 
-GPS & GNSS Monitor receives NMEA data from a GPS/GNSS module through the M5StickS3 hardware UART and processes it using the TinyGPSPlus library.
+---
 
-The firmware can display the following information:
+## 🚀 Features
 
-- Number of satellites
-- HDOP and position quality
-- Latitude and longitude
-- Altitude
-- Current speed
-- Course and compass direction
-- Date and time
-- Distance from the trip starting point
-- Route distance
-- Average moving speed
-- Minimum and maximum speed
-- Minimum and maximum altitude
-- First-fix and session information
+* 📡 Real-time GPS/GNSS data monitoring
+* 🛰️ Satellite count and position quality information
+* 📍 Latitude and longitude
+* 🧭 Course and compass direction
+* 🚗 Current speed
+* ⛰️ Altitude
+* 📏 Distance from the trip starting point
+* 🛣️ Route statistics
+* 📊 Average moving speed
+* ⚡ Minimum and maximum speed
+* ⛰️ Minimum and maximum altitude
+* 🕐 GPS/GNSS date and time
+* 🌎 Configurable timezone
+* 📅 Configurable date and time formats
+* 📐 Configurable coordinate format
+* 🚗 Configurable speed units
+* 📏 Configurable altitude and distance units
+* 💡 Configurable display brightness
+* 🔋 Automatic display timeout to save battery
+* ⚠️ GPS/GNSS communication warning
+* 💾 Persistent configuration storage
+* 🔧 Configurable GNSS baud rate
+* 🔄 Trip reset function
 
-### GPS/GNSS Connection
+---
 
-The firmware uses the following M5StickS3 GPIOs for the GPS/GNSS module:
+# 🖥️ Screens
 
-| GPS Module | M5StickS3 |
-|---|---|
-| TX | GPIO 44 (RX) |
-| RX | GPIO 43 (TX) |
+The firmware provides several dedicated screens for monitoring different aspects of the GPS/GNSS data.
 
-The UART communication uses 8 data bits, no parity, and 1 stop bit (`SERIAL_8N1`).
+### 📡 General
 
-### Route and Trip Statistics
+Provides an overview of the current GPS/GNSS status, including satellite information and position quality.
 
-The firmware maintains two different distance measurements:
+### 📍 Position
 
-- **Distance**: straight-line distance between the trip starting point and the current position.
-- **Route Stats**: accumulated distance between consecutive GNSS positions while the device is moving.
+Displays the current geographic coordinates.
 
-Route distance and moving time are only recorded when the GNSS-reported speed is above the configured minimum moving speed. This helps prevent small GPS position variations while stationary from being counted as movement.
+Depending on the selected coordinate format, the position can be displayed using different coordinate representations.
 
-The **Average Moving Speed** is calculated from the accumulated route distance and the total time spent moving.
+### 🚗 Speed
 
-### Communication Timeout
+Displays the current speed received from the GPS/GNSS module.
 
-The firmware monitors valid GPS/GNSS time updates to detect communication problems.
+The speed unit can be configured in the settings.
 
-By default, a warning is shown when no valid GPS/GNSS time update is received for **15 seconds**. This timeout can be configured in the firmware settings.
+### ⛰️ Altitude
 
-### Configuration Settings
+Displays the current altitude reported by the GPS/GNSS module.
 
-The firmware includes configurable settings for:
+The altitude unit can be changed between meters and feet.
 
-- GPS/GNSS baud rate
-- Theme color
-- Coordinate format
-- Speed unit
-- Altitude unit
-- Distance unit
-- Timezone
-- Time format
-- Date format
-- Display brightness
+### 📏 Distance
 
-### Persistent Settings
+Displays the distance between the **trip starting point** and the current position.
 
-Settings are stored using the ESP32 **NVS (Non-Volatile Storage)** through the `Preferences` library.
+This is a straight-line distance and should not be confused with the accumulated route distance.
 
-This means the configured values remain stored after:
+### 🛣️ Route Stats
 
-- Rebooting the M5StickS3
-- Turning the device off and on again
-- Uploading a new firmware normally without erasing the entire flash
+Provides statistics related to the movement recorded during the current trip.
 
-On the first startup, or when no valid persistent settings are found, the firmware loads the default settings and asks the user to select the GNSS module baud rate.
+The firmware can calculate:
 
-Invalid stored settings are automatically replaced with safe default values.
+* Total route distance
+* Average moving speed
+* Minimum speed
+* Maximum speed
+* Minimum altitude
+* Maximum altitude
+* Moving time
 
-### Button Controls
+Route distance is calculated by accumulating the distance between consecutive GNSS positions while the device is considered to be moving.
 
-The M5StickS3 buttons are used to navigate through the firmware interface.
+To reduce the effect of small GNSS position variations while stationary, the firmware only considers movement when the reported speed is above an internal **minimum moving speed**.
 
-#### Button B
+> **Note:** The minimum moving speed is an internal firmware parameter. It cannot currently be changed through the Settings menu.
 
-- **Short press:** move to the next screen.
-- **Long press:** move to the previous screen.
+### 🧭 Course
 
-#### Button A
+Displays the current direction of travel and compass direction calculated from the GNSS data.
 
-Button A behavior depends on the current screen. It is used to:
+### 🕐 Time
 
-- Change the format or unit of the current screen
-- Enter the Settings menu
-- Change a setting
-- Confirm certain actions
-- Dismiss the communication warning
+Displays the current date and time received from the GPS/GNSS module.
 
-In the Settings menu, Button B navigates between settings and Button A changes or confirms the selected option.
+GNSS time is received in UTC and converted according to the timezone configured in the firmware.
 
-### Time and Timezone
+The firmware also handles date changes when the converted time crosses midnight.
 
-GPS/GNSS time is received in UTC and converted according to the configured timezone. The firmware also adjusts the calendar date when the timezone conversion crosses midnight.
+### ℹ️ Session Info
 
-### Supported GPS/GNSS Modules
+Provides information about the current GPS/GNSS session, including information related to the first valid fix and session operation.
 
-The firmware is designed to work with GPS/GNSS modules that provide standard NMEA data over UART.
+### ⚙️ Settings
 
-It was developed and tested with the **REYAX RYS352A**, but other compatible NMEA GPS/GNSS modules may also work when configured with a supported baud rate and connected to the correct UART pins.
+Allows the user to configure the available firmware settings.
 
-## Installation Using Arduino IDE
+---
 
-To compile and upload the firmware from source, you must first install the **M5StickS3 board support package** and the required libraries in Arduino IDE.
+# 🎛️ Button Controls
 
-The official M5Stack documentation provides the required instructions for configuring the M5StickS3 in Arduino IDE:
+The M5StickS3 buttons are used to navigate between screens and configure the firmware.
 
-[How to program M5StickS3 with Arduino IDE](https://docs.m5stack.com/en/arduino/m5sticks3/program)
+### Button B
 
-After completing the board and library installation:
+* **Short press:** Go to the next screen.
+* **Long press:** Go to the previous screen.
 
-1. Open `GPS_GNSS_Monitor.ino` in Arduino IDE.
-2. Select the M5StickS3 board.
-3. Connect the M5StickS3 to the computer through USB.
-4. Compile and upload the firmware.
-5. On the first startup, select the baud rate used by your GPS/GNSS module when prompted by the firmware.
+### Button A
 
-## Installation Using the `.bin` Firmware File
+The function of Button A depends on the current screen.
 
-A precompiled `.merged.bin` firmware image is provided in this repository for users who do not want to compile the source code.
+It can be used to:
 
-For the easiest flashing process, it is recommended to use **Google Chrome** with the official Espressif web-based esptool:
+* Change display formats
+* Change units
+* Enter settings
+* Change configuration values
+* Confirm configuration changes
+* Turn the display back on
+* Dismiss the GPS/GNSS communication warning
 
-[Espressif esptool-js](https://espressif.github.io/esptool-js/)
+Inside the Settings menu:
 
-### Step 1 — Download the Firmware
+* **Button B:** Navigate between settings.
+* **Button A:** Change or confirm the selected setting.
 
-Download the `GPS_GNSS_Monitor.merged.bin` file from this repository.
+---
 
-### Step 2 — Enter Programming Mode
+# 🔋 Display Timeout
 
-Put the M5StickS3 into programming/download mode:
+The firmware includes a **display timeout** function designed to help save battery power.
 
-1. Disconnect the M5StickS3 from the computer if necessary.
-2. Press and hold the **Power button**.
-3. Keep holding it until the indicator light starts flashing.
-4. The M5StickS3 is now in programming mode.
+If there is no user interaction for the configured period of time, the display automatically turns off.
 
-### Step 3 — Connect the M5StickS3
+GPS/GNSS processing continues normally while the display is turned off.
 
-Connect the M5StickS3 to the computer using USB.
+To turn the display back on:
 
-Open the [Espressif esptool-js](https://espressif.github.io/esptool-js/) page in Google Chrome and connect to the M5StickS3 using a serial baud rate of **115200**.
+> **Press Button A.**
 
-### Step 4 — Select the Firmware File
+The display timeout can be configured through the Settings menu.
 
-Select:
+You can:
+
+* ⏱️ Change the amount of time before the display turns off.
+* 🔴 Disable the display timeout completely.
+
+This allows the device to continue monitoring GPS/GNSS data without keeping the screen continuously illuminated.
+
+---
+
+# ⚠️ GPS/GNSS Communication Warning
+
+The firmware monitors the GPS/GNSS communication and displays a warning if valid information from the module is not received for a certain period of time.
+
+This can be useful for identifying situations such as:
+
+* 🔌 Disconnected GPS/GNSS modules
+* 🔧 Incorrect UART wiring
+* ⚙️ Incorrect baud rate
+* 📡 Temporary communication problems
+* 🔋 GPS/GNSS module power interruptions
+
+The warning **does not stop the firmware**.
+
+It can simply be ignored by pressing Button A, allowing the user to continue using the firmware.
+
+> **Important:** The timeout used to trigger this warning is an **internal firmware parameter** and cannot currently be changed through the Settings menu.
+
+---
+
+# 📡 GPS/GNSS Compatibility
+
+GPS & GNSS Monitor is designed to work with GPS/GNSS modules that provide standard **NMEA data over UART**.
+
+The firmware communicates with the module using:
 
 ```text
-GPS_GNSS_Monitor.merged.bin
+SERIAL_8N1
 ```
 
-Use the following flashing parameters:
+This means:
 
-| Parameter | Value |
-|---|---|
-| Flash Address | `0x0` |
-| Flash Mode | `DIO` |
-| Flash Frequency | `80MHz` |
-| Flash Size | `8MB` |
+* 8 data bits
+* No parity
+* 1 stop bit
 
-Then click **Program**.
+The firmware supports several common UART baud rates, including:
 
-### Step 5 — Wait for the Upload to Finish
+* 9600
+* 19200
+* 38400
+* 57600
+* 115200
 
-Wait until esptool-js reports that the flashing process has completed successfully.
+Different GPS/GNSS modules can provide different levels of:
 
-Do not disconnect the M5StickS3 while the firmware is being written.
+* 📍 Position accuracy
+* 🛰️ Satellite acquisition performance
+* ⚡ Fix acquisition speed
+* 📡 Signal sensitivity
+* 🔄 Update rate
 
-After the upload is complete, restart the M5StickS3.
+Therefore, the overall performance of the system depends not only on the firmware, but also on the GPS/GNSS module, antenna, satellite visibility, environment, and signal conditions.
 
-### First Startup After Installation
+---
 
-Regardless of whether the firmware was installed through Arduino IDE or using the `.bin` file, the **first startup requires the user to select the baud rate of the GPS/GNSS module being used**.
+# 🔌 GPS/GNSS Connection
 
-This is necessary because different GPS/GNSS modules may use different UART baud rates.
+Connect the GPS/GNSS module to the M5StickS3 UART as follows:
 
-For example, if your module communicates at 115200 baud, select **115200** during the first startup configuration.
+| GPS/GNSS Module | M5StickS3                   |
+| --------------- | --------------------------- |
+| **TX**          | **GPIO 44 (RX)**            |
+| **RX**          | **GPIO 43 (TX)**            |
+| **GND**         | **GND**                     |
+| **VCC**         | **Compatible power supply** |
 
-## Source Code
+### UART Connection
 
-The main firmware source code is available in:
+The communication direction is crossed:
+
+```text
+GPS/GNSS TX  →  M5StickS3 GPIO 44 (RX)
+GPS/GNSS RX  →  M5StickS3 GPIO 43 (TX)
+GPS/GNSS GND →  M5StickS3 GND
+GPS/GNSS VCC →  Compatible power supply
+```
+
+> ⚠️ Always verify the voltage requirements of your GPS/GNSS module before connecting it to the M5StickS3.
+
+---
+
+# 🧰 Hardware Assembly
+
+For my hardware setup, I soldered the necessary pins to a small PCB and wired the GPS/GNSS module and the M5StickS3 together.
+
+This creates a compact assembly where the GPS/GNSS module and the M5StickS3 remain firmly attached to each other.
+
+This type of assembly is especially useful for:
+
+* Portable GPS/GNSS testing
+* Field experiments
+* Navigation
+* Development and prototyping
+* Long-term monitoring
+
+The exact mechanical assembly can be adapted according to the GPS/GNSS module being used.
+
+---
+
+# ⭐ Recommended GPS/GNSS Module
+
+I developed and tested the firmware using the **REYAX RYS352A**, supplied by REYAX.
+
+I was very satisfied with the module during my tests, particularly with its **quality, positioning precision, and fast FIX acquisition**.
+
+For this reason, I strongly recommend the RYS352A for anyone looking for a high-quality GPS/GNSS module for this project.
+
+According to the manufacturer, the RYS352A supports multiple GNSS systems and provides NMEA output over UART, with navigation updates of up to 10 Hz.
+
+### 🛰️ REYAX RYS352A
+
+Official product page:
+
+https://reyax.com/product/GPS-GNSS/RYS352A
+
+Purchase options:
+
+* **DigiKey:** https://www.digikey.com/en/products/detail/reyax/RYS352A/22206992
+* **eBay:** https://www.ebay.com/itm/187031730034
+* **Amazon:** https://www.amazon.com/dp/B0CM5JTJL7?lv=shuf&language=zh_TW&channelId=500&plpRedirect=mhFallback
+
+---
+
+# 🎯 Position Accuracy
+
+The actual positioning accuracy depends on several factors, including:
+
+* GPS/GNSS module
+* Antenna quality
+* Number of satellites in view
+* Satellite geometry
+* Signal strength
+* Indoor or outdoor environment
+* Obstructions
+* Multipath effects
+* Atmospheric conditions
+
+Different modules can therefore produce different results even when running the same firmware.
+
+The REYAX RYS352A used during development provided very good results in my tests, including good precision and fast FIX acquisition.
+
+The firmware itself does not artificially improve the positioning accuracy provided by the GNSS receiver. It displays and processes the information received from the module.
+
+---
+
+# 📊 HDOP and Position Quality
+
+The firmware also uses **HDOP (Horizontal Dilution of Precision)** as an indicator related to horizontal positioning quality.
+
+HDOP is affected by satellite geometry and can help indicate how favorable the current satellite configuration is for determining the horizontal position.
+
+A lower HDOP generally indicates better satellite geometry, while a higher value indicates less favorable geometry.
+
+However, HDOP should not be interpreted as a direct measurement of position accuracy in meters.
+
+---
+
+# 🛣️ Distance and Route Statistics
+
+The firmware uses two different concepts for distance.
+
+## 📏 Distance
+
+The **Distance** screen calculates the straight-line distance between:
+
+```text
+Trip starting position
+        ↓
+Current position
+```
+
+This means it represents the displacement from the starting point rather than the actual path traveled.
+
+For example, if you travel around a large area and eventually return close to your starting point, the Distance value may become small even though you have traveled a much longer route.
+
+---
+
+## 🛣️ Route Stats
+
+**Route Stats** calculates accumulated route distance.
+
+The firmware calculates the distance between consecutive GNSS positions and adds these values together while the device is considered to be moving.
+
+Conceptually:
+
+```text
+Point 1 → Point 2
+Point 2 → Point 3
+Point 3 → Point 4
+Point 4 → Point 5
+        ↓
+Accumulated Route Distance
+```
+
+To prevent small GNSS position variations while stationary from being interpreted as movement, the firmware only accumulates route distance when the GNSS-reported speed is above the configured internal minimum moving speed.
+
+### ⚠️ Route Stats is an estimate
+
+Route Stats should be considered an **estimate of the distance traveled**, not a precision surveying measurement.
+
+GNSS positioning naturally contains small variations. Because of this, the calculated route distance can differ from the actual physical distance traveled.
+
+The minimum moving-speed threshold helps reduce stationary GNSS drift, but it cannot completely eliminate measurement errors.
+
+The minimum moving-speed value is an **internal firmware parameter** and cannot currently be changed through the Settings menu.
+
+---
+
+# ⚙️ Configuration
+
+The firmware provides several configurable options.
+
+### 🎨 Display
+
+* Theme color
+* Display brightness
+* Display timeout
+
+### 📍 Position
+
+* Coordinate format
+
+### 🚗 Speed
+
+* Speed unit
+
+### ⛰️ Altitude
+
+* Altitude unit
+
+### 📏 Distance
+
+* Distance unit
+
+### 🕐 Time
+
+* Timezone
+* Time format
+* Date format
+
+### 📡 GPS/GNSS
+
+* GNSS baud rate
+
+### 🔄 Trip
+
+* Reset trip statistics
+
+---
+
+# 💾 Persistent Settings
+
+Configuration values are stored using the ESP32's non-volatile storage.
+
+This means that settings normally remain available after:
+
+* Restarting the device
+* Powering the device off and on
+* Installing a normal firmware update without completely erasing the flash
+
+The firmware also initializes safe default values when necessary.
+
+---
+
+# 🟢 First Startup
+
+After installing the firmware and connecting a GPS/GNSS module:
+
+1. 🔌 Connect the GPS/GNSS module to the M5StickS3.
+2. ⚙️ Make sure the selected GNSS baud rate matches the module.
+3. 🛰️ Move to an area with good sky visibility.
+4. ⏳ Wait for the GPS/GNSS receiver to acquire a FIX.
+5. 📍 The position and other GNSS information will begin to appear on the display.
+
+The first FIX can take longer depending on the GNSS module, satellite visibility, antenna, and current receiver conditions.
+
+---
+
+# 💻 Installation
+
+There are three ways to install GPS & GNSS Monitor.
+
+## 1. 📦 Install the `.bin` Firmware
+
+The repository contains the precompiled firmware:
+
+```text
+GPS_GNSS_Monitor.bin
+```
+
+You can use a browser-based ESP flashing tool such as **esptool-js** to program the device.
+
+[Open ESP Tool JS](https://espressif.github.io/esptool-js/)
+
+### Steps
+
+1. Download `GPS_GNSS_Monitor.bin` from this repository.
+2. Put the M5StickS3 into programming mode.
+3. Connect it to your computer through USB.
+4. Open the ESP flashing tool: ([https://espressif.github.io/esptool-js/](https://espressif.github.io/esptool-js/)).
+5. Select the downloaded `.bin` file.
+6. Select the appropriate serial port.
+7. Start the flashing process.
+8. Restart the device.
+9. Connect the GPS/GNSS module.
+10. Select the correct GNSS baud rate on the first startup.
+
+---
+
+## 2. 🛠️ Install Using Arduino IDE
+
+The complete source code is also provided in the repository.
+
+Main source file:
 
 ```text
 GPS_GNSS_Monitor.ino
 ```
 
-The precompiled firmware image is available in:
+### Requirements
+
+* Arduino IDE
+* M5StickS3 board support
+* M5Unified library
+* M5GFX library
+* TinyGPSPlus library
+
+### Installation
+
+1. Install Arduino IDE.
+2. Open the `GPS_GNSS_Monitor.ino` file.
+3. Install the required libraries.
+4. Select the **M5StickS3** board.
+5. Connect the M5StickS3 using USB.
+6. Select the correct serial port.
+7. Compile and upload the firmware.
+8. Restart the device.
+9. Connect the GPS/GNSS module.
+10. Configure the GNSS baud rate if necessary.
+
+Official M5Stack Arduino documentation:
+
+https://docs.m5stack.com/en/arduino/m5sticks3/program
+
+---
+
+## 3. 🔥 Install Using M5Burner
+
+GPS & GNSS Monitor is also available through **M5Burner**.
+
+The firmware name is:
 
 ```text
-GPS_GNSS_Monitor.merged.bin
+GPS & GNSS Monitor
 ```
 
-## License
+### Installation using M5Burner
+
+1. Download and install M5Burner.
+2. Open M5Burner.
+3. Search for:
+
+```text
+GPS & GNSS Monitor
+```
+
+4. Select the firmware.
+5. Connect your M5StickS3 to the computer using USB.
+6. Select the corresponding COM port.
+7. Start the flashing process.
+8. Wait until the installation is completed.
+9. Restart the device.
+10. Connect your GPS/GNSS module.
+
+Official M5Burner documentation:
+
+https://github.com/m5stack/m5-docs/blob/master/docs/en/related_documents/M5Burner.md
+
+---
+
+# 📚 Official M5Stack Documentation
+
+The official M5Stack documentation for the StickS3 is available here:
+
+https://docs.m5stack.com/en/core/StickS3
+
+The Arduino programming guide is available here:
+
+https://docs.m5stack.com/en/arduino/m5sticks3/program
+
+---
+
+# 🧪 Testing
+
+I performed several tests with the firmware and GPS/GNSS module to verify the main functions.
+
+The tests included:
+
+* 📡 GPS/GNSS communication
+* 🛰️ Satellite information
+* 📍 Position
+* 🚗 Speed
+* ⛰️ Altitude
+* 📏 Distance
+* 🛣️ Route statistics
+* 🧭 Course
+* 🕐 Date and time
+* 🌎 Timezone conversion
+* ⚙️ Configuration settings
+* 💾 Persistent settings
+* 🔋 Display timeout
+* ⚠️ GPS/GNSS communication warning
+
+The firmware worked correctly during these tests.
+
+---
+
+# 🐉 Bruce Firmware with GPS Info
+
+I also made available a **modified version of the Bruce firmware** that adds a dedicated:
+
+```text
+GPS Info
+```
+
+screen.
+
+This screen provides several pieces of information received from the connected GPS/GNSS module and can be useful for users who want to inspect GNSS information while using Bruce.
+
+If you are interested in installing this modified Bruce firmware, see the dedicated repository:
+
+https://github.com/viniciushnf/M5StickS3-with-GPS-and-GNSS
+
+---
+
+# 📁 Repository Contents
+
+The repository contains the main files required to use and develop the project.
+
+```text
+GPS_GNSS_Monitor.ino
+GPS_GNSS_Monitor.bin
+README.md
+```
+
+The repository also contains project images and other supporting files.
+
+---
+
+# 🙏 Acknowledgments
+
+Special thanks to:
+
+* **REYAX** for providing the RYS352A GPS/GNSS module used during development and testing.
+
+---
+
+## ⭐ If you find this project useful
+
+If this project helps you with GPS/GNSS experimentation, navigation, development, or testing, consider giving the repository a ⭐ on GitHub.
+
+---
+
+# 📄 License
 
 This project is released under the **MIT License**.
