@@ -330,6 +330,20 @@ A lower HDOP generally indicates better satellite geometry, while a higher value
 
 However, HDOP should not be interpreted as a direct measurement of position accuracy in meters.
 
+The firmware displays HDOP and converts the value into a qualitative description.
+
+The current implementation uses the following ranges:
+
+|          HDOP | Firmware indication     |
+| ------------- | ----------------------- |
+|       `< 0.7` | **Excellent**           |
+| `0.7 – < 1.5` | **Good**                |
+| `1.5 – < 3.0` | **Moderate**            |
+| `3.0 – < 5.0` | **Poor**                |
+|       `≥ 5.0` | **Very Poor**           |
+
+When no valid HDOP value has been obtained yet, the firmware displays: No Fix.
+
 ---
 
 # 🛣️ Distance and Route Statistics
