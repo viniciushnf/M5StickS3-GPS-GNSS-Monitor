@@ -1,6 +1,6 @@
 # GPS & GNSS Monitor for M5StickS3
 
-GPS & GNSS Monitor transforms your **M5StickS3** into a compact, real-time GPS/GNSS monitoring device.
+GPS & GNSS Monitor transforms your **M5Stack StickS3** into a compact, real-time GPS/GNSS monitoring device.
 
 Simply connect a compatible GPS or GNSS module through UART and the firmware can display your current position, satellite information, speed, altitude, distance traveled, course, date, time, and route statistics directly on the device.
 
@@ -112,7 +112,7 @@ Allows the user to configure the available firmware settings.
 
 # 🎛️ Button Controls
 
-The M5StickS3 buttons are used to navigate between screens and configure the firmware.
+The StickS3 buttons are used to navigate between screens and configure the firmware.
 
 ### Button B
 
@@ -221,9 +221,9 @@ Therefore, the overall performance of the system depends not only on the firmwar
 
 # 🔌 GPS/GNSS Connection
 
-Connect the GPS/GNSS module to the M5StickS3 UART as follows:
+Connect the GPS/GNSS module to the StickS3 UART as follows:
 
-| GPS/GNSS Module | M5StickS3                   |
+| GPS/GNSS Module | StickS3                   |
 | --------------- | --------------------------- |
 | **TX**          | **GPIO 44 (RX)**            |
 | **RX**          | **GPIO 43 (TX)**            |
@@ -235,21 +235,21 @@ Connect the GPS/GNSS module to the M5StickS3 UART as follows:
 The communication direction is crossed:
 
 ```text
-GPS/GNSS TX  →  M5StickS3 GPIO 44 (RX)
-GPS/GNSS RX  →  M5StickS3 GPIO 43 (TX)
-GPS/GNSS GND →  M5StickS3 GND
+GPS/GNSS TX  →  StickS3 GPIO 44 (RX)
+GPS/GNSS RX  →  StickS3 GPIO 43 (TX)
+GPS/GNSS GND →  StickS3 GND
 GPS/GNSS VCC →  Compatible power supply
 ```
 
-> ⚠️ Always verify the voltage requirements of your GPS/GNSS module before connecting it to the M5StickS3.
+> ⚠️ Always verify the voltage requirements of your GPS/GNSS module before connecting it to the StickS3.
 
 ---
 
 # 🧰 Hardware Assembly
 
-For my hardware setup, I soldered the necessary pins to a small PCB and wired the GPS/GNSS module and the M5StickS3 together.
+For my hardware setup, I soldered the necessary pins to a small PCB and wired the GPS/GNSS module and the StickS3 together.
 
-This creates a compact assembly where the GPS/GNSS module and the M5StickS3 remain firmly attached to each other.
+This creates a compact assembly where the GPS/GNSS module and the StickS3 remain firmly attached to each other.
 
 This type of assembly is especially useful for:
 
@@ -432,7 +432,7 @@ The firmware also initializes safe default values when necessary.
 
 After installing the firmware and connecting a GPS/GNSS module:
 
-1. 🔌 Connect the GPS/GNSS module to the M5StickS3.
+1. 🔌 Connect the GPS/GNSS module to the StickS3.
 2. ⚙️ Make sure the selected GNSS baud rate matches the module.
 3. 🛰️ Move to an area with good sky visibility.
 4. ⏳ Wait for the GPS/GNSS receiver to acquire a FIX.
@@ -461,7 +461,7 @@ You can use a browser-based ESP flashing tool such as **esptool-js** to program 
 ### Steps
 
 1. Download `GPS_GNSS_Monitor.bin` from this repository.
-2. Put the M5StickS3 into programming mode.
+2. Put the StickS3 into programming mode.
 3. Connect it to your computer through USB.
 4. Open the ESP flashing tool: [https://espressif.github.io/esptool-js/](https://espressif.github.io/esptool-js/).
 5. Select the downloaded `.bin` file.
@@ -486,7 +486,7 @@ GPS_GNSS_Monitor.ino
 ### Requirements
 
 * Arduino IDE
-* M5StickS3 board support
+* M5Stack StickS3 board support
 * M5Unified library
 * M5GFX library
 * TinyGPSPlus library
@@ -497,7 +497,7 @@ GPS_GNSS_Monitor.ino
 2. Open the `GPS_GNSS_Monitor.ino` file.
 3. Install the required libraries.
 4. Select the **M5StickS3** board.
-5. Connect the M5StickS3 using USB.
+5. Connect the StickS3 using USB.
 6. Select the correct serial port.
 7. Compile and upload the firmware.
 8. Restart the device.
@@ -531,7 +531,7 @@ GPS & GNSS Monitor
 ```
 
 4. Select the firmware.
-5. Connect your M5StickS3 to the computer using USB.
+5. Connect your StickS3 to the computer using USB.
 6. Select the corresponding COM port.
 7. Start the flashing process.
 8. Wait until the installation is completed.
