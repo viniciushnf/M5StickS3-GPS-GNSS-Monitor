@@ -38,6 +38,10 @@ It is designed for **portable navigation, GPS/GNSS testing, field monitoring, po
 
 # 🖥️ Screens
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens.gif" alt="Screens" width="100%">
+</p>
+
 The firmware provides several dedicated screens for monitoring different aspects of the GPS/GNSS data.
 
 ### 📡 General
