@@ -583,13 +583,7 @@ The firmware worked correctly during these tests.
 
 # 🦈 Bruce Firmware with GPS Info
 
-I also made available a **modified version of the Bruce firmware** that adds a dedicated:
-
-```text
-GPS Info
-```
-
-screen.
+I also made available a **modified version of the Bruce firmware** that adds a dedicated: GPS Info screen.
 
 This screen provides several pieces of information received from the connected GPS/GNSS module and can be useful for users who want to inspect GNSS information while using Bruce.
 
