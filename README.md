@@ -463,7 +463,7 @@ You can use a browser-based ESP flashing tool such as **esptool-js** to program 
 1. Download `GPS_GNSS_Monitor.bin` from this repository.
 2. Put the M5StickS3 into programming mode.
 3. Connect it to your computer through USB.
-4. Open the ESP flashing tool: ([https://espressif.github.io/esptool-js/](https://espressif.github.io/esptool-js/)).
+4. Open the ESP flashing tool: [https://espressif.github.io/esptool-js/](https://espressif.github.io/esptool-js/).
 5. Select the downloaded `.bin` file.
 6. Select the appropriate serial port.
 7. Start the flashing process.
