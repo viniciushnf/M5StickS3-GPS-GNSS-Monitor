@@ -488,7 +488,7 @@ You can use a browser-based ESP flashing tool such as **esptool-js** to program 
 1. Download `GPS_GNSS_Monitor.bin` from this repository.
 2. Put the StickS3 into programming mode.
 3. Connect it to your computer through USB.
-4. Open the ESP flashing tool: [https://espressif.github.io/esptool-js/](https://espressif.github.io/esptool-js/).
+4. Open the ESP flashing tool: https://espressif.github.io/esptool-js/.
 5. Select the downloaded `.bin` file.
 6. Select the appropriate serial port.
 7. Start the flashing process.
@@ -615,20 +615,6 @@ This screen provides several pieces of information received from the connected G
 If you are interested in installing this modified Bruce firmware, see the dedicated repository:
 
 https://github.com/viniciushnf/M5StickS3-with-GPS-and-GNSS
-
----
-
-# 📁 Repository Contents
-
-The repository contains the main files required to use and develop the project.
-
-```text
-GPS_GNSS_Monitor.ino
-GPS_GNSS_Monitor.bin
-README.md
-```
-
-The repository also contains project images and other supporting files.
 
 ---
 
