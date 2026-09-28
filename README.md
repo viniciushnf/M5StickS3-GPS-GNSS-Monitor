@@ -39,7 +39,7 @@ It is designed for **portable navigation, GPS/GNSS testing, field monitoring, po
 # 🖥️ Screens
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens.gif" alt="Screens" width="100%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens.gif" alt="Screens" width="70%">
 </p>
 
 The firmware provides several dedicated screens for monitoring different aspects of the GPS/GNSS data.
@@ -251,6 +251,13 @@ GPS/GNSS VCC →  Compatible power supply
 
 # 🧰 Hardware Assembly
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/pcb-1.jpg" alt="PCB" width="70%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/photo-6.jpg" alt="Photo" width="70%">
+</p>
+
 For my hardware setup, I soldered the necessary pins to a small PCB and wired the GPS/GNSS module and the StickS3 together.
 
 This creates a compact assembly where the GPS/GNSS module and the StickS3 remain firmly attached to each other.
@@ -275,7 +282,7 @@ I was very satisfied with the module during my tests, particularly with its **qu
 
 For this reason, I strongly recommend the RYS352A for anyone looking for a high-quality GPS/GNSS module for this project.
 
-According to the manufacturer, the RYS352A supports multiple GNSS systems and provides NMEA output over UART, with navigation updates of up to 10 Hz.
+The RYS352A supports multiple GNSS systems and provides NMEA output over UART, with navigation updates of up to 10 Hz.
 
 ### 🛰️ REYAX RYS352A
 
