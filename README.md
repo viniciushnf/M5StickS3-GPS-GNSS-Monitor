@@ -325,6 +325,10 @@ For this reason, I strongly recommend the RYS352A for anyone looking for a high-
 
 The RYS352A supports multiple GNSS systems and provides NMEA output over UART, with navigation updates of up to 10 Hz.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/RYS352A.png" alt="GPS & GNSS Monitor Screens" width="70%">
+</p>
+
 ### 🛰️ REYAX RYS352A
 
 Official product page:
