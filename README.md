@@ -268,7 +268,7 @@ Connect the GPS/GNSS module to the StickS3 UART as follows:
 | **VCC**         | **Compatible power supply** |
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/wiring-diagram.png" alt="GPS & GNSS Monitor Screens" width="50%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/wiring-diagram.png" alt="GPS & GNSS Monitor Screens" width="70%">
 </p>
 
 ### UART Connection
@@ -434,48 +434,6 @@ The minimum moving-speed value is an **internal firmware parameter** and cannot 
 
 ---
 
-# ⚙️ Configuration
-
-The firmware provides several configurable options.
-
-### 🎨 Display
-
-* Theme color
-* Display brightness
-* Display timeout
-
-### 📍 Position
-
-* Coordinate format
-
-### 🚗 Speed
-
-* Speed unit
-
-### ⛰️ Altitude
-
-* Altitude unit
-
-### 📏 Distance
-
-* Distance unit
-
-### 🕐 Time
-
-* Timezone
-* Time format
-* Date format
-
-### 📡 GPS/GNSS
-
-* GNSS baud rate
-
-### 🔄 Trip
-
-* Reset trip statistics
-
----
-
 # 💾 Persistent Settings
 
 Configuration values are stored using the ESP32's non-volatile storage.
@@ -510,28 +468,62 @@ There are three ways to install GPS & GNSS Monitor.
 
 ## 1. 📦 Install the `.bin` Firmware
 
-The repository contains the precompiled firmware:
+Both firmware options can be installed on the StickS3 using the same flashing procedure with **ESP Tool JS**.
 
-```text
-GPS_GNSS_Monitor.bin
-```
+[Espressif ESP Tool JS: https://espressif.github.io/esptool-js/](https://espressif.github.io/esptool-js/)
 
-You can use a browser-based ESP flashing tool such as **esptool-js** to program the device.
+> **Recommendation:** Use **Google Chrome** when accessing ESP Tool JS, as it generally provides the best Web Serial support for this type of browser-based flashing tool.
 
-[Open ESP Tool JS](https://espressif.github.io/esptool-js/)
+### Entering Programming Mode
 
-### Steps
+Before flashing the firmware, the StickS3 must be placed into **download/programming mode**.
 
-1. Download `GPS_GNSS_Monitor.bin` from this repository.
-2. Put the StickS3 into programming mode.
-3. Connect it to your computer through USB.
-4. Open the ESP flashing tool: https://espressif.github.io/esptool-js/.
-5. Select the downloaded `.bin` file.
-6. Select the appropriate serial port.
-7. Start the flashing process.
-8. Restart the device.
-9. Connect the GPS/GNSS module.
-10. Select the correct GNSS baud rate on the first startup.
+1. Press and hold the **Power button**.
+2. Keep the button pressed until the indicator LED starts flashing.
+3. The StickS3 is now ready to be programmed.
+
+### Flashing Procedure
+
+1. Put the StickS3 into programming mode.
+2. Connect the StickS3 to your computer using USB.
+3. Download `GPS_GNSS_Monitor.bin` from this repository.
+4. Open [ESP Tool JS](https://espressif.github.io/esptool-js/) in Google Chrome.
+5. Set the baud rate to `115200`.
+6. Select the StickS3's **COM port**.
+7. Select the `.bin` file in ESP Tool JS.
+8. Set **Flash Address** to `0x0`.
+9. Set **Flash Mode** to `dio`.
+10. Set **Flash Frequency** to `80m`.
+11. Set **Flash Size** to `8MB`.
+12. Start the flashing process.
+13. Wait for the process to finish.
+14. Restart the StickS3.
+
+### ESP Tool JS screenshots
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/media/esptool-1.png" alt="ESPTool 1" width="70%">
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/media/esptool-2.png" alt="ESPTool 2" width="70%">
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/media/esptool-3.png" alt="ESPTool 3" width="70%">
+</p>
+
+### Required Settings
+
+When flashing either firmware, use the following settings:
+
+| ESP Tool JS Setting | Value    |
+| ------------------- | -------- |
+| **Baudrate**        | `115200` |
+| **Flash Address**   | `0x0`    |
+| **Flash Mode**      | `dio`    |
+| **Flash Frequency** | `80m`    |
+| **Flash Size**      | `8MB`    |
 
 ---
 
