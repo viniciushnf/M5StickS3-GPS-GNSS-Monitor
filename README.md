@@ -478,7 +478,7 @@ There are three ways to install GPS & GNSS Monitor.
 
 Both firmware options can be installed on the StickS3 using the same flashing procedure with **ESP Tool JS**.
 
-[Espressif ESP Tool JS: https://espressif.github.io/esptool-js/](https://espressif.github.io/esptool-js/)
+Espressif ESP Tool JS: [https://espressif.github.io/esptool-js/](https://espressif.github.io/esptool-js/)
 
 > **Recommendation:** Use **Google Chrome** when accessing ESP Tool JS, as it generally provides the best Web Serial support for this type of browser-based flashing tool.
 
@@ -495,7 +495,7 @@ Before flashing the firmware, the StickS3 must be placed into **download/program
 1. Put the StickS3 into programming mode.
 2. Connect the StickS3 to your computer using USB.
 3. Download `GPS_GNSS_Monitor.bin` from this repository.
-4. Open [ESP Tool JS](https://espressif.github.io/esptool-js/) in Google Chrome.
+4. Open [ESP Tool JS](https://espressif.github.io/esptool-js/).
 5. Set the baud rate to `115200`.
 6. Select the StickS3's **COM port**.
 7. Select the `.bin` file in ESP Tool JS.
@@ -566,9 +566,7 @@ GPS_GNSS_Monitor.ino
 9. Connect the GPS/GNSS module.
 10. Configure the GNSS baud rate if necessary.
 
-Official M5Stack Arduino documentation:
-
-https://docs.m5stack.com/en/arduino/m5sticks3/program
+Official M5Stack Arduino documentation: [docs.m5stack.com/en/arduino/m5sticks3/program](https://docs.m5stack.com/en/arduino/m5sticks3/program)
 
 ---
 
@@ -599,22 +597,6 @@ GPS & GNSS Monitor
 8. Wait until the installation is completed.
 9. Restart the device.
 10. Connect your GPS/GNSS module.
-
-Official M5Burner documentation:
-
-https://github.com/m5stack/m5-docs/blob/master/docs/en/related_documents/M5Burner.md
-
----
-
-# 📚 Official M5Stack Documentation
-
-The official M5Stack documentation for the StickS3 is available here:
-
-https://docs.m5stack.com/en/core/StickS3
-
-The Arduino programming guide is available here:
-
-https://docs.m5stack.com/en/arduino/m5sticks3/program
 
 ---
 
@@ -649,23 +631,39 @@ I also made available a **modified version of the Bruce firmware** that adds a d
 
 This screen provides several pieces of information received from the connected GPS/GNSS module and can be useful for users who want to inspect GNSS information while using Bruce.
 
-If you are interested in installing this modified Bruce firmware, see the dedicated repository:
+If you are interested in installing this modified Bruce firmware, check the repository:
+[github.com/viniciushnf/StickS3-GPS-GNSS](https://github.com/viniciushnf/StickS3-GPS-GNSS)
 
-https://github.com/viniciushnf/M5StickS3-with-GPS-and-GNSS
+---
+
+# 👋 Get in touch
+
+If you build this project, I'd love to see the result! 
+
+If you have any questions, suggestions, or run into any issues, feel free to contact me on Instagram. 
+
+I'm always happy to help, receive feedback, and see what the community creates. 
+
+I'm also open to collaborations and partnership opportunities related to electronics, embedded systems, and open-source projects.
+
+* Instagram: **@viniciushnf**
+* [instagram.com/viniciushnf](https://www.instagram.com/viniciushnf/)
+
+---
+
+## ⭐ If You Find This Project Useful
+
+If this project helps you turn your StickS3 into a practical GPS/GNSS device, consider giving the repository a ⭐ on GitHub.
+
+Enjoy experimenting with GPS and GNSS!
 
 ---
 
 # 🙏 Acknowledgments
 
-Special thanks to:
+Special thanks to **REYAX** for providing the **RYS352A GNSS module** used during the development and testing of this project.
 
-* **REYAX** for providing the RYS352A GPS/GNSS module used during development and testing.
-
----
-
-## ⭐ If you find this project useful
-
-If this project helps you with GPS/GNSS experimentation, navigation, development, or testing, consider giving the repository a ⭐ on GitHub.
+Thank you for supporting the project and for providing a module that performed very well during testing.
 
 ---
 
