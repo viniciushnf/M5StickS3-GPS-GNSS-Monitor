@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/cover.webp" alt="Cover" width="100%">
+</p>
+
 # GPS & GNSS Monitor for M5StickS3
 
 GPS & GNSS Monitor transforms your **M5Stack StickS3** into a compact, real-time GPS/GNSS monitoring device.
