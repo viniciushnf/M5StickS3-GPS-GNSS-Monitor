@@ -462,20 +462,6 @@ The firmware also initializes safe default values when necessary.
 
 ---
 
-# 🟢 First Startup
-
-After installing the firmware and connecting a GPS/GNSS module:
-
-1. 🔌 Connect the GPS/GNSS module to the StickS3.
-2. ⚙️ Make sure the selected GNSS baud rate matches the module.
-3. 🛰️ Move to an area with good sky visibility.
-4. ⏳ Wait for the GPS/GNSS receiver to acquire a FIX.
-5. 📍 The position and other GNSS information will begin to appear on the display.
-
-The first FIX can take longer depending on the GNSS module, satellite visibility, antenna, and current receiver conditions.
-
----
-
 # 💻 Installation
 
 There are three ways to install GPS & GNSS Monitor.
