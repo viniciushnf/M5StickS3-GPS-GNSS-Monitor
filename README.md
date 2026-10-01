@@ -510,15 +510,15 @@ Before flashing the firmware, the StickS3 must be placed into **download/program
 ### ESP Tool JS screenshots
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/media/esptool-1.png" alt="ESPTool 1" width="70%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/esptool-1.png" alt="ESPTool 1" width="70%">
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/media/esptool-2.png" alt="ESPTool 2" width="70%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/esptool-2.png" alt="ESPTool 2" width="70%">
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/media/esptool-3.png" alt="ESPTool 3" width="70%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/esptool-3.png" alt="ESPTool 3" width="70%">
 </p>
 
 ### Required Settings
