@@ -250,6 +250,10 @@ The firmware supports several common UART baud rates, including:
 * 57600
 * 115200
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/baudrate.jpg" alt="GPS & GNSS Monitor Screens" width="50%">
+</p>
+
 Different GPS/GNSS modules can provide different levels of:
 
 * 📍 Position accuracy
