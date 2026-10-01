@@ -267,6 +267,10 @@ Connect the GPS/GNSS module to the StickS3 UART as follows:
 | **GND**         | **GND**                     |
 | **VCC**         | **Compatible power supply** |
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/wiring-diagram.png" alt="GPS & GNSS Monitor Screens" width="50%">
+</p>
+
 ### UART Connection
 
 The communication direction is crossed:
