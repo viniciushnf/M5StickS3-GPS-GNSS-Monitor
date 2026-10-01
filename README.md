@@ -215,7 +215,7 @@ It can simply be ignored by pressing Button A, allowing the user to continue usi
 > **Important:** The timeout used to trigger this warning is an **internal firmware parameter** and cannot currently be changed through the Settings menu.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screen-warning.jpg" alt="GPS & GNSS Monitor Screens" width="70%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screen-warning.jpg" alt="GPS & GNSS Monitor Screens" width="50%">
 </p>
 
 ---
