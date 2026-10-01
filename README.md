@@ -46,8 +46,6 @@ It is designed for **portable navigation, GPS/GNSS testing, field monitoring, po
   <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens.gif" alt="Screens" width="70%">
 </p>
 
-The firmware provides several dedicated screens for monitoring different aspects of the GPS/GNSS data.
-
 ### 📡 General
 
 Provides an overview of the current GPS/GNSS status, including satellite information and position quality.
@@ -108,9 +106,13 @@ GNSS time is received in UTC and converted according to the timezone configured 
 
 The firmware also handles date changes when the converted time crosses midnight.
 
-### ℹ️ Session Info
+### 📈 Session Info
 
 Provides information about the current GPS/GNSS session, including information related to the first valid fix and session operation.
+
+### ℹ️ About
+
+Information about the developer, selected baud rate, and TX and RX pins.
 
 ### ⚙️ Settings
 
