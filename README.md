@@ -218,6 +218,10 @@ It can simply be ignored by pressing Button A, allowing the user to continue usi
   <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screen-warning.jpg" alt="GPS & GNSS Monitor Screens" width="50%">
 </p>
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screen-general-warning.jpg" alt="GPS & GNSS Monitor Screens" width="50%">
+</p>
+
 ---
 
 # 📡 GPS/GNSS Compatibility
