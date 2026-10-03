@@ -581,8 +581,8 @@ You can access the firmware in either of the following ways:
 
 ### Installing the Firmware with M5Burner
 
-1. Connect the **StickS3** to your computer using a **USB cable**.
-2. Put the StickS3 into **programming mode** by pressing and holding the **Power** button until the indicator light starts blinking.
+1. Put the StickS3 into **programming mode** by pressing and holding the **Power** button until the indicator light starts blinking.
+2. Connect the **StickS3** to your computer using a **USB cable**.
 3. Open [M5Burner](https://burner.m5stack.com/) using **Google Chrome**.
 4. Select **StickS3** and search for **GPS & GNSS Monitor**, or open the [direct firmware page](https://burner.m5stack.com/85KU9L).
 5. Follow the M5Burner instructions to select the StickS3 and upload the firmware.
