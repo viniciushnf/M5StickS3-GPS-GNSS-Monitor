@@ -564,31 +564,29 @@ Official M5Stack Arduino documentation: [docs.m5stack.com/en/arduino/m5sticks3/p
 
 ## 3. 🔥 Install Using M5Burner
 
-GPS & GNSS Monitor is also available through **M5Burner**.
+The **GPS & GNSS Monitor** firmware is also available directly through **M5Burner**, making it easy to install the firmware on your StickS3 without manually downloading the firmware file.
 
-The firmware name is:
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-gps-gnss-monitor.webp" alt="GPS & GNSS Monitor Screens" width="70%">
+</p>
 
-```text
-GPS & GNSS Monitor
-```
+### Access the Firmware
 
-### Installation using M5Burner
+You can access the firmware in either of the following ways:
 
-1. Download and install M5Burner.
-2. Open M5Burner.
-3. Search for:
+* Visit [M5Burner](https://burner.m5stack.com/), select **StickS3**, and search for `GPS & GNSS Monitor`.
+* Open the firmware directly through [this link](https://burner.m5stack.com/85KU9L).
 
-```text
-GPS & GNSS Monitor
-```
+> **💡 Recommendation:** For the best experience when using M5Burner, I recommend using **Google Chrome**.
 
-4. Select the firmware.
-5. Connect your StickS3 to the computer using USB.
-6. Select the corresponding COM port.
-7. Start the flashing process.
-8. Wait until the installation is completed.
-9. Restart the device.
-10. Connect your GPS/GNSS module.
+### Installing the Firmware with M5Burner
+
+1. Connect the **StickS3** to your computer using a **USB cable**.
+2. Put the StickS3 into **programming mode** by pressing and holding the **Power** button until the indicator light starts blinking.
+3. Open [M5Burner](https://burner.m5stack.com/) using **Google Chrome**.
+4. Select **StickS3** and search for **GPS & GNSS Monitor**, or open the [direct firmware page](https://burner.m5stack.com/85KU9L).
+5. Follow the M5Burner instructions to select the StickS3 and upload the firmware.
+6. Wait for the installation to complete. Once finished, the StickS3 will be ready to use with the **GPS & GNSS Monitor** firmware.
 
 ---
 
