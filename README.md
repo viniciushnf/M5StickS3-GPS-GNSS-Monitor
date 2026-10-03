@@ -90,9 +90,7 @@ The firmware can calculate:
 
 Route distance is calculated by accumulating the distance between consecutive GNSS positions while the device is considered to be moving.
 
-To reduce the effect of small GNSS position variations while stationary, the firmware only considers movement when the reported speed is above an internal **minimum moving speed**.
-
-> **Note:** The minimum moving speed is an internal firmware parameter. It cannot currently be changed through the Settings menu.
+To reduce the effect of small GNSS position variations while stationary, the firmware only considers movement when the reported speed is above an internal **minimum moving speed** of **1 km/h**.
 
 ### 🧭 Course
 
