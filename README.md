@@ -23,6 +23,8 @@ It is designed for **portable navigation, GPS/GNSS testing, field monitoring, po
 * 📏 Distance from the trip starting point
 * 🛣️ Route statistics
 * 📊 Average moving speed
+* 🖥️ Landscape and portrait screen layouts
+* 🔄 Multiple screen layouts for General and Route Stats
 * ⚡ Minimum and maximum speed
 * ⛰️ Minimum and maximum altitude
 * 🕐 GPS/GNSS date and time
@@ -49,6 +51,10 @@ It is designed for **portable navigation, GPS/GNSS testing, field monitoring, po
 ### 📡 General
 
 Provides an overview of the current GPS/GNSS status, including satellite information and position quality.
+
+The General section includes four screen layouts: one landscape layout and three portrait-oriented sub-screens.
+
+Press **Button A** to cycle through the available General layouts.
 
 ### 📍 Position
 
@@ -78,8 +84,13 @@ This is a straight-line distance and should not be confused with the accumulated
 
 Provides statistics related to the movement recorded during the current trip.
 
-The firmware can calculate:
+The Route Stats section includes three screen layouts: one landscape layout and two portrait-oriented sub-screens.
 
+One of the portrait layouts includes a graphical indicator that compares current speed with the recorded average, minimum, and maximum speeds.
+
+Press **Button A** to cycle through the available Route Stats layouts.
+
+The firmware can calculate:
 * Total route distance
 * Average moving speed
 * Minimum speed
@@ -165,6 +176,8 @@ It can be used to:
 * Confirm configuration changes
 * Turn the display back on
 * Dismiss the GPS/GNSS communication warning
+* Cycle through the available General screen layouts.
+* Cycle through the available Route Stats screen layouts.
 
 Inside the Settings menu:
 
