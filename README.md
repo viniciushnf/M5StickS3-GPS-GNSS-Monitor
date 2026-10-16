@@ -599,6 +599,31 @@ You can access the firmware in either of the following ways:
 5. Follow the M5Burner instructions to select the StickS3 and upload the firmware.
 6. Wait for the installation to complete. Once finished, the StickS3 will be ready to use with the **GPS & GNSS Monitor** firmware.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-1.webp" alt="Step 1" width="70%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-2.webp" alt="Step 2" width="70%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-3.webp" alt="Step 3" width="70%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-4.webp" alt="Step 4" width="70%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-5.webp" alt="Step 5" width="70%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-6.webp" alt="Step 6" width="70%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-7.webp" alt="Step 7" width="70%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-8.webp" alt="Step 8" width="70%">
+</p>
+
 ---
 
 # 🧪 Testing
