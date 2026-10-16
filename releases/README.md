@@ -10,6 +10,8 @@ This directory contains the published versions of **GPS & GNSS Monitor** for the
 
 Version 1.1 expands the display options and improves how key navigation information is presented on the M5StickS3.
 
+**Version released on:** October 16, 2026.
+
 #### Added
 
 - **New General sub-screens:** Three additional portrait layouts provide alternative views of speed, altitude, satellite information, HDOP, date, time, coordinates, and course.
@@ -30,6 +32,8 @@ Version 1.1 expands the display options and improves how key navigation informat
 **Release type:** Initial public release
 
 Version 1.0 established the core GPS & GNSS Monitor firmware for the M5StickS3. It receives GNSS data from a compatible module over UART and presents navigation and receiver information through the device's screen-based interface.
+
+**Version released on:** September 6, 2026.
 
 #### Included features
 
