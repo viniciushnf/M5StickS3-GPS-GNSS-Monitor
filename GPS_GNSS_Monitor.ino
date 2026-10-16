@@ -39,6 +39,8 @@ bool toggle_screen = true;  // Variable to control when the screen has been togg
 bool toggle_screen_settings = true;  // Variable to control when the settings screen has been toggled
 bool settings_mode = false;          // Variable to control when the settings mode is active
 byte screen_settings_i = 0;          // Variable to control which settings screen will be displayed
+byte screen_general_i = 0;           // Variable to control which general screen will be displayed
+byte screen_route_i = 0;             // Variable to control which route statistics screen will be displayed
 
 int baudrate_options[] = {9600, 19200, 38400, 57600, 115200};                                          // Array of baud rates
 uint16_t theme_color_options[] = {WHITE, RED, GREEN, BLUE, YELLOW, CYAN, MAGENTA};                     // Array of available theme colors
@@ -156,7 +158,7 @@ void setup() {
   M5.begin();                                                                                   // Initializes the M5 library
   M5.Display.setBrightness(percentage_to_byte(100));                                            // Sets the splash screen brightness to 100%
   M5.Display.fillScreen(BLACK);                                                                 // Fill the screen with the color black
-  M5.Display.setRotation(3);                                                                    // Setting the screen rotation to 3
+  M5.Display.setRotation(3);                                                                    // Sets the display rotation to 270 degrees (rotation mode 3), adjusting the screen orientation to match the desired layout
   M5.Display.setTextSize(3);                                                                    // Setting the text size to 3
   M5.Display.setTextColor(WHITE);                                                               // Setting the text color to WHITE
   M5.Display.setTextDatum(middle_center);                                                       // Setting the text datum to middle and center
@@ -213,6 +215,12 @@ void loop() {
       button_b_pressed = false;  // button_b_pressed is set to false, as the screen has already been toggled
       draw_screen = true;        // Set draw_screen to true to indicate that the screen needs to be redrawn
       toggle_screen = true;      // Set toggle_screen to true to indicate that the screen has been toggled
+      if ((screen_i == 0 && screen_general_i > 0) || (screen_i == 5 && screen_route_i > 0)) {
+        // If the current screen is the General screen and the general screen index is greater than 0, or if the current screen is the Route Statistics screen and the route statistics screen index is greater than 0
+        M5.Display.setRotation(0);  // Vertical screen (with button A at the bottom)
+      } else {
+        M5.Display.setRotation(3);  // Standard rotation (screen horizontal with button A on the left)
+      }
     }
   }
 
@@ -263,6 +271,7 @@ void loop() {
       draw_screen = true;
     }
     if (draw_screen) {
+      M5.Display.setRotation(3);  // Standard rotation (screen horizontal with button A on the left)
       screen_header("Warning");
       M5.Display.setTextSize(2);
       M5.Display.setTextDatum(top_center);
@@ -272,6 +281,10 @@ void loop() {
       M5.Display.drawString("No updates received for " + millis_to_time(millis() - gps_time.last_update_millis), M5.Display.width() / 2, 90);  // Shows the elapsed time
       M5.Display.drawString("Press Button A to dismiss", M5.Display.width() / 2, 115);
       draw_screen = false;  // draw_screen is set to false so the screen isn't drawn every time
+      if ((screen_i == 0 && screen_general_i > 0) || (screen_i == 5 && screen_route_i > 0)) {
+        // If the current screen is the General screen and the general screen index is greater than 0, or if the current screen is the Route Statistics screen and the route statistics screen index is greater than 0
+        M5.Display.setRotation(0);  // Vertical screen (with button A at the bottom)
+      }
     }
     if (M5.BtnA.wasPressed()) {                      // If button A was pressed
       system_state.display_timeout_warning = false;  // Dismiss the warning
@@ -420,10 +433,10 @@ void update_display() {  // Function responsible for selecting which screen will
     case 1:  // If the screen_i index is 1, it goes to the position screen
       screen_position();
       break;
-    case 2:  // If the screen_i index is 2, it goes to the speed screen.
+    case 2:  // If the screen_i index is 2, it goes to the speed screen
       screen_speed();
       break;
-    case 3:  // If the screen_i index is 2, it goes to the altitude screen
+    case 3:  // If the screen_i index is 3, it goes to the altitude screen
       screen_altitude();
       break;
     case 4:
@@ -452,11 +465,66 @@ void update_display() {  // Function responsible for selecting which screen will
       screen_i = 0;
       break;
   }
+  if (draw_screen) {
+    // Check if the timeout warning screen should not be displayed and if the timeout is longer than acceptable
+    if (system_state.display_timeout_warning == false && millis() - gps_time.last_update_millis >= (settings.gps_timeout_seconds * 1000)) {
+      M5.Display.fillTriangle(M5.Display.width() - 5, M5.Display.height() - 5, M5.Display.width() - 26, M5.Display.height() - 5, M5.Display.width() - 15, M5.Display.height() - 26, YELLOW);
+      M5.Display.setTextDatum(middle_center);
+      M5.Display.setTextSize(2);
+      M5.Display.setTextColor(BLACK);
+      M5.Display.drawString("!", M5.Display.width() - 14, M5.Display.height() - 12);
+      // Shows a warning icon when GNSS communication has timed out but the warning screen is not active
+    }
+  }
   draw_screen = false;    // draw_screen is set to false, as the screen has already been drawn
   toggle_screen = false;  // toggle_screen is set to false because the screen has already been toggled
 }
 
 void screen_general() {
+  if (M5.BtnA.wasPressed()) {
+    screen_general_i = screen_general_i + 1;
+    if (screen_general_i > 3) {
+      screen_general_i = 0;
+    }
+    draw_screen = true;    // Set draw_screen to true to indicate that the screen needs to be redrawn
+    toggle_screen = true;  // Set toggle_screen to true to indicate that the screen has been toggled
+  }
+
+  if (draw_screen) {
+    if (screen_general_i == 0) {
+      M5.Display.setRotation(3);  // Set display rotation to landscape orientation (3), with the blue button facing left
+    } else {
+      M5.Display.setRotation(0);  // Set display rotation to portrait orientation (0), with the blue button facing down
+    }
+  }
+
+  switch (screen_general_i) {
+    case 0:
+      screen_general_1();
+      break;
+    case 1:
+      screen_general_2();
+      break;
+    case 2:
+      screen_general_3();
+      break;
+    case 3:
+      screen_general_4();
+      break;
+    default:
+      screen_general_1();
+      screen_general_i = 0;
+      break;
+  }
+
+  if (screen_general_i != 0) {
+    M5.Display.setTextDatum(top_left);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.setTextColor(settings.theme_color);
+  }
+}
+
+void screen_general_1() {
   if (draw_screen) {
     screen_header("General");
     M5.Display.setCursor(10, 35);
@@ -498,16 +566,426 @@ void screen_general() {
     } else {
       M5.Display.println("ft");
     }
-    M5.Display.setCursor(10, 95);
+    String latitude_str;
+    String longitude_str;
+    bool draw_degree_symbol = false;
+    int latitude_degree_x = 0;
+    int longitude_degree_x = 0;
+    if (settings.coord_format == "Decimal") {
+      latitude_str = String(gps_data.latitude, 6);
+      longitude_str = String(gps_data.longitude, 6);
+    } else if (settings.coord_format == "DM") {
+      {  // Latitude
+        double coordinate = gps_data.latitude;
+        char direction = coordinate >= 0 ? 'N' : 'S';
+        coordinate = abs(coordinate);
+        int degrees = (int)coordinate;
+        double minutes = (coordinate - degrees) * 60.0;
+        char buffer[20];
+        sprintf(buffer, "%d %.4f'%c", degrees, minutes, direction);
+        latitude_str = String(buffer);
+      }
+      {  // Longitude
+        double coordinate = gps_data.longitude;
+        char direction = coordinate >= 0 ? 'E' : 'W';
+        coordinate = abs(coordinate);
+        int degrees = (int)coordinate;
+        double minutes = (coordinate - degrees) * 60.0;
+        char buffer[20];
+        sprintf(buffer, "%d %.4f'%c", degrees, minutes, direction);
+        longitude_str = String(buffer);
+      }
+      draw_degree_symbol = true;
+    } else if (settings.coord_format == "DMS") {
+      {  // Latitude
+        double coordinate = gps_data.latitude;
+        char direction = coordinate >= 0 ? 'N' : 'S';
+        coordinate = abs(coordinate);
+        int degrees = (int)coordinate;
+        double minutes_decimal = (coordinate - degrees) * 60.0;
+        int minutes = (int)minutes_decimal;
+        double seconds = (minutes_decimal - minutes) * 60.0;
+        char buffer[25];
+        sprintf(buffer, "%d %02d'%.1f\"%c", degrees, minutes, seconds, direction);
+        latitude_str = String(buffer);
+      }
+      {  // Longitude
+        double coordinate = gps_data.longitude;
+        char direction = coordinate >= 0 ? 'E' : 'W';
+        coordinate = abs(coordinate);
+        int degrees = (int)coordinate;
+        double minutes_decimal = (coordinate - degrees) * 60.0;
+        int minutes = (int)minutes_decimal;
+        double seconds = (minutes_decimal - minutes) * 60.0;
+        char buffer[25];
+        sprintf(buffer, "%d %02d'%.1f\"%c", degrees, minutes, seconds, direction);
+        longitude_str = String(buffer);
+      }
+      draw_degree_symbol = true;
+    }
+    int latitude_y = 95;
+    int longitude_y = 115;
+    M5.Display.setCursor(10, latitude_y);
     M5.Display.setTextSize(1);
     M5.Display.print("LAT: ");
     M5.Display.setTextSize(2);
-    M5.Display.println(gps_data.latitude, 6);
-    M5.Display.setCursor(10, 115);
+    int latitude_start_x = M5.Display.getCursorX();
+    M5.Display.println(latitude_str);
+    M5.Display.setCursor(10, longitude_y);
     M5.Display.setTextSize(1);
     M5.Display.print("LNG: ");
     M5.Display.setTextSize(2);
-    M5.Display.println(gps_data.longitude, 6);
+    int longitude_start_x = M5.Display.getCursorX();
+    M5.Display.println(longitude_str);
+    if (draw_degree_symbol) {
+      // Latitude
+      int latitude_degrees = abs((int)gps_data.latitude);
+      int latitude_degree_width = M5.Display.textWidth(String(latitude_degrees));
+      latitude_degree_x = latitude_start_x + latitude_degree_width + 2;
+      M5.Display.drawCircle(latitude_degree_x, latitude_y + 3, 2);
+      // Longitude
+      int longitude_degrees = abs((int)gps_data.longitude);
+      int longitude_degree_width = M5.Display.textWidth(String(longitude_degrees));
+      longitude_degree_x = longitude_start_x + longitude_degree_width + 2;
+      M5.Display.drawCircle(longitude_degree_x, longitude_y + 3, 2);
+    }
+  }
+}
+
+void screen_general_2() {
+  if (draw_screen) {
+    screen_header_vertical("General", true);
+    M5.Display.setTextSize(1);
+    M5.Display.drawString("Speed - " + settings.units_speed_measurement, M5.Display.width() / 2, 25);
+    M5.Display.setTextSize(4);
+    M5.Display.drawString(convert_speed(gps_data.speed, false), M5.Display.width() / 2, 40);
+    M5.Display.setTextSize(1);
+    if (settings.unit_altitude_measurement == "Meters") {
+      M5.Display.drawString("Altitude - Meters", M5.Display.width() / 2, 85);
+      M5.Display.setTextSize(4);
+      M5.Display.drawString(String((int)gps_data.altitude), M5.Display.width() / 2, 100);
+    } else {
+      M5.Display.drawString("Altitude - Feet", M5.Display.width() / 2, 85);
+      M5.Display.setTextSize(4);
+      M5.Display.drawString(String((int)(gps_data.altitude * 3.28084)), M5.Display.width() / 2, 100);
+    }
+    M5.Display.setTextSize(1);
+    M5.Display.drawString("SAT", M5.Display.width() / 4, 145);
+    M5.Display.drawString("HDOP", (M5.Display.width() / 4) * 3, 145);
+    M5.Display.setTextSize(3);
+    M5.Display.drawString(String(gps_data.satellites), M5.Display.width() / 4, 160);
+    if (gps_data.hdop < 10) {
+      M5.Display.drawString(String(gps_data.hdop, 1), (M5.Display.width() / 4) * 3, 160);
+    } else {
+      M5.Display.drawString(String((int)gps_data.hdop), (M5.Display.width() / 4) * 3, 160);
+    }
+    String direction_symbol;
+    if (gps_data.course >= 337.5 || gps_data.course < 22.5) {
+      direction_symbol = "N";
+    } else if (gps_data.course < 67.5) {
+      direction_symbol = "NE";
+    } else if (gps_data.course < 112.5) {
+      direction_symbol = "E";
+    } else if (gps_data.course < 157.5) {
+      direction_symbol = "SE";
+    } else if (gps_data.course < 202.5) {
+      direction_symbol = "S";
+    } else if (gps_data.course < 247.5) {
+      direction_symbol = "SW";
+    } else if (gps_data.course < 292.5) {
+      direction_symbol = "W";
+    } else {
+      direction_symbol = "NW";
+    }
+    String latitude_str;
+    String longitude_str;
+    bool draw_degree_symbol = false;
+    int latitude_degree_x = 0;
+    int longitude_degree_x = 0;
+    if (settings.coord_format == "Decimal") {
+      latitude_str = String(gps_data.latitude, 6);
+      longitude_str = String(gps_data.longitude, 6);
+    } else if (settings.coord_format == "DM") {
+      {  // Latitude
+        double coordinate = gps_data.latitude;
+        char direction = coordinate >= 0 ? 'N' : 'S';
+        coordinate = abs(coordinate);
+        int degrees = (int)coordinate;
+        double minutes = (coordinate - degrees) * 60.0;
+        char buffer[20];
+        sprintf(buffer, "%d %.4f'%c", degrees, minutes, direction);
+        latitude_str = String(buffer);
+      }
+      {  // Longitude
+        double coordinate = gps_data.longitude;
+        char direction = coordinate >= 0 ? 'E' : 'W';
+        coordinate = abs(coordinate);
+        int degrees = (int)coordinate;
+        double minutes = (coordinate - degrees) * 60.0;
+        char buffer[20];
+        sprintf(buffer, "%d %.4f'%c", degrees, minutes, direction);
+        longitude_str = String(buffer);
+      }
+      draw_degree_symbol = true;
+    } else if (settings.coord_format == "DMS") {
+      {  // Latitude
+        double coordinate = gps_data.latitude;
+        char direction = coordinate >= 0 ? 'N' : 'S';
+        coordinate = abs(coordinate);
+        int degrees = (int)coordinate;
+        double minutes_decimal = (coordinate - degrees) * 60.0;
+        int minutes = (int)minutes_decimal;
+        double seconds = (minutes_decimal - minutes) * 60.0;
+        char buffer[25];
+        sprintf(buffer, "%d %02d'%.1f\"%c", degrees, minutes, seconds, direction);
+        latitude_str = String(buffer);
+      }
+      {  // Longitude
+        double coordinate = gps_data.longitude;
+        char direction = coordinate >= 0 ? 'E' : 'W';
+        coordinate = abs(coordinate);
+        int degrees = (int)coordinate;
+        double minutes_decimal = (coordinate - degrees) * 60.0;
+        int minutes = (int)minutes_decimal;
+        double seconds = (minutes_decimal - minutes) * 60.0;
+        char buffer[25];
+        sprintf(buffer, "%d %02d'%.1f\"%c", degrees, minutes, seconds, direction);
+        longitude_str = String(buffer);
+      }
+      draw_degree_symbol = true;
+    }
+    int latitude_y = 210;
+    int longitude_y = 225;
+    M5.Display.setTextSize(1);
+    M5.Display.setTextDatum(top_left);
+    M5.Display.drawString("Course:", 15, 195);
+    M5.Display.setTextDatum(top_right);
+    M5.Display.drawString(String((int)gps_data.course), M5.Display.width() - 40, 195);
+    M5.Display.drawCircle(M5.Display.width() - 37, 197, 1, settings.theme_color);
+    M5.Display.drawString(direction_symbol, M5.Display.width() - 15, 195);
+    M5.Display.setTextDatum(top_left);
+    M5.Display.drawString("LAT:", 15, latitude_y);
+    M5.Display.setTextDatum(top_right);
+    M5.Display.drawString(latitude_str, M5.Display.width() - 15, latitude_y);
+    M5.Display.setTextDatum(top_left);
+    M5.Display.drawString("LNG:", 15, longitude_y);
+    M5.Display.setTextDatum(top_right);
+    M5.Display.drawString(longitude_str, M5.Display.width() - 15, longitude_y);
+    int latitude_start_x = M5.Display.width() - 15 - M5.Display.textWidth(latitude_str);
+    int longitude_start_x = M5.Display.width() - 15 - M5.Display.textWidth(longitude_str);
+    if (draw_degree_symbol) {
+      // Latitude
+      int latitude_degrees = abs((int)gps_data.latitude);
+      int latitude_degree_width = M5.Display.textWidth(String(latitude_degrees));
+      latitude_degree_x = latitude_start_x + latitude_degree_width + 2;
+      M5.Display.drawCircle(latitude_degree_x, latitude_y + 2, 1, settings.theme_color);
+      // Longitude
+      int longitude_degrees = abs((int)gps_data.longitude);
+      int longitude_degree_width = M5.Display.textWidth(String(longitude_degrees));
+      longitude_degree_x = longitude_start_x + longitude_degree_width + 2;
+      M5.Display.drawCircle(longitude_degree_x, longitude_y + 2, 1, settings.theme_color);
+    }
+  }
+}
+
+void screen_general_3() {
+  if (draw_screen) {
+    screen_header_vertical("General", true);
+    char time_str[12];
+    if (settings.time_format == "24-hour") {
+      sprintf(time_str, "%02d:%02d:%02d", gps_time.hour, gps_time.minute, gps_time.second);  // Formats the time as HH:MM:SS
+    } else {
+      int hour = gps_time.hour;
+      hour = hour % 12;
+      if (hour == 0) {
+        hour = 12;
+      }
+      sprintf(time_str, "%02d:%02d", hour, gps_time.minute);  // Formats the time using the 12-hour format
+    }
+    char date_str[11];
+    if (settings.date_format == "YYYY-MM-DD") {
+      sprintf(date_str, "%04d-%02d-%02d", gps_time.year, gps_time.month, gps_time.day);
+    } else if (settings.date_format == "MM/DD/YYYY") {
+      sprintf(date_str, "%02d/%02d/%04d", gps_time.month, gps_time.day, gps_time.year);
+    } else {
+      sprintf(date_str, "%02d/%02d/%04d", gps_time.day, gps_time.month, gps_time.year);
+    }
+    if (settings.time_format == "24-hour") {
+      M5.Display.setTextSize(0.5f);
+      M5.Display.setFont(&fonts::Font7);
+      M5.Display.drawString(time_str, M5.Display.width() / 2, 25);
+    } else {
+      M5.Display.setFont(&fonts::Font0);
+      M5.Display.setTextSize(3);
+      int time_indicators_width = M5.Display.textWidth("AM");
+      M5.Display.setFont(&fonts::Font7);
+      M5.Display.setTextSize(0.5f);
+      int time_text_width = M5.Display.textWidth(time_str);
+      M5.Display.drawString(time_str, (M5.Display.width() / 2) - (time_indicators_width / 2), 25);
+      M5.Display.setFont(&fonts::Font0);
+      M5.Display.setTextSize(3);
+      if (gps_time.hour >= 12) {
+        M5.Display.drawString("PM", (M5.Display.width() / 2) + (time_text_width / 2) + 5, 25);
+      } else {
+        M5.Display.drawString("AM", (M5.Display.width() / 2) + (time_text_width / 2) + 5, 25);
+      }
+    }
+    M5.Display.setTextSize(0.8f);
+    M5.Display.setFont(&fonts::FreeSans12pt7b);
+    M5.Display.drawString(date_str, (M5.Display.width() / 2), 60);
+    M5.Display.drawLine(0, 85, M5.Display.width(), 85, settings.theme_color);
+    String latitude_str;
+    String longitude_str;
+    bool draw_degree_symbol = false;
+    int latitude_degree_x = 0;
+    int longitude_degree_x = 0;
+    if (settings.coord_format == "Decimal") {
+      latitude_str = String(gps_data.latitude, 6);
+      longitude_str = String(gps_data.longitude, 6);
+    } else if (settings.coord_format == "DM") {
+      {  // Latitude
+        double coordinate = gps_data.latitude;
+        char direction = coordinate >= 0 ? 'N' : 'S';
+        coordinate = abs(coordinate);
+        int degrees = (int)coordinate;
+        double minutes = (coordinate - degrees) * 60.0;
+        char buffer[20];
+        sprintf(buffer, "%d %.4f'%c", degrees, minutes, direction);
+        latitude_str = String(buffer);
+      }
+      {  // Longitude
+        double coordinate = gps_data.longitude;
+        char direction = coordinate >= 0 ? 'E' : 'W';
+        coordinate = abs(coordinate);
+        int degrees = (int)coordinate;
+        double minutes = (coordinate - degrees) * 60.0;
+        char buffer[20];
+        sprintf(buffer, "%d %.4f'%c", degrees, minutes, direction);
+        longitude_str = String(buffer);
+      }
+      draw_degree_symbol = true;
+    } else if (settings.coord_format == "DMS") {
+      {  // Latitude
+        double coordinate = gps_data.latitude;
+        char direction = coordinate >= 0 ? 'N' : 'S';
+        coordinate = abs(coordinate);
+        int degrees = (int)coordinate;
+        double minutes_decimal = (coordinate - degrees) * 60.0;
+        int minutes = (int)minutes_decimal;
+        double seconds = (minutes_decimal - minutes) * 60.0;
+        char buffer[25];
+        sprintf(buffer, "%d %02d'%.1f\"%c", degrees, minutes, seconds, direction);
+        latitude_str = String(buffer);
+      }
+      {  // Longitude
+        double coordinate = gps_data.longitude;
+        char direction = coordinate >= 0 ? 'E' : 'W';
+        coordinate = abs(coordinate);
+        int degrees = (int)coordinate;
+        double minutes_decimal = (coordinate - degrees) * 60.0;
+        int minutes = (int)minutes_decimal;
+        double seconds = (minutes_decimal - minutes) * 60.0;
+        char buffer[25];
+        sprintf(buffer, "%d %02d'%.1f\"%c", degrees, minutes, seconds, direction);
+        longitude_str = String(buffer);
+      }
+      draw_degree_symbol = true;
+    }
+    int latitude_y = 110;
+    int longitude_y = 150;
+    int latitude_start_x = 10;
+    int longitude_start_x = 10;
+    M5.Display.setTextDatum(top_left);
+    M5.Display.setTextSize(1);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.drawString("Latitude:", 10, 95);
+    M5.Display.setTextSize(0.6f);
+    M5.Display.setFont(&fonts::FreeSans18pt7b);
+    M5.Display.drawString(latitude_str, latitude_start_x, latitude_y);
+    M5.Display.setTextSize(1);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.drawString("Longitude:", 10, 135);
+    M5.Display.setTextSize(0.6f);
+    M5.Display.setFont(&fonts::FreeSans18pt7b);
+    M5.Display.drawString(longitude_str, longitude_start_x, longitude_y);
+    if (draw_degree_symbol) {
+      // Latitude
+      int latitude_degrees = abs((int)gps_data.latitude);
+      int latitude_degree_width = M5.Display.textWidth(String(latitude_degrees));
+      latitude_degree_x = latitude_start_x + latitude_degree_width + 2;
+      M5.Display.drawCircle(latitude_degree_x, latitude_y + 3, 2);
+      // Longitude
+      int longitude_degrees = abs((int)gps_data.longitude);
+      int longitude_degree_width = M5.Display.textWidth(String(longitude_degrees));
+      longitude_degree_x = longitude_start_x + longitude_degree_width + 2;
+      M5.Display.drawCircle(longitude_degree_x, longitude_y + 3, 2);
+    }
+    M5.Display.drawLine(0, 180, M5.Display.width(), 180, settings.theme_color);
+    M5.Display.drawLine(M5.Display.width() / 2, 180, M5.Display.width() / 2, M5.Display.height(), settings.theme_color);
+    M5.Display.setTextDatum(top_center);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.setTextSize(1);
+    M5.Display.drawString("SAT", M5.Display.width() / 4, 190);
+    M5.Display.drawString("HDOP", (M5.Display.width() / 4) * 3, 190);
+    M5.Display.setTextSize(0.7f);
+    M5.Display.setFont(&fonts::FreeSans18pt7b);
+    M5.Display.drawString(String(gps_data.satellites), M5.Display.width() / 4, 205);
+    if (gps_data.hdop < 10) {
+      M5.Display.drawString(String(gps_data.hdop, 1), (M5.Display.width() / 4) * 3, 205);
+    } else {
+      M5.Display.drawString(String((int)gps_data.hdop), (M5.Display.width() / 4) * 3, 205);
+    }
+    M5.Display.setFont(&fonts::Font0);
+  }
+}
+
+void screen_general_4() {
+  if (draw_screen) {
+    screen_header_vertical("General", false);
+    M5.Display.fillRoundRect(10, 25, M5.Display.width() - 20, 62, 10, BLACK);
+    M5.Display.setTextSize(1);
+    M5.Display.drawString("Speed - " + settings.units_speed_measurement, M5.Display.width() / 2, 32);
+    M5.Display.setFont(&fonts::FreeSans18pt7b);
+    M5.Display.drawString(convert_speed(gps_data.speed, false), M5.Display.width() / 2, 50);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.fillRoundRect(10, 97, M5.Display.width() - 20, 62, 10, BLACK);
+    if (settings.unit_altitude_measurement == "Meters") {
+      M5.Display.drawString("Altitude - Meters", M5.Display.width() / 2, 106);
+      M5.Display.setFont(&fonts::FreeSans18pt7b);
+      M5.Display.drawString(String((int)gps_data.altitude), M5.Display.width() / 2, 123);
+      M5.Display.setFont(&fonts::Font0);
+    } else {
+      M5.Display.drawString("Altitude - Feet", M5.Display.width() / 2, 106);
+      M5.Display.setFont(&fonts::FreeSans18pt7b);
+      M5.Display.drawString(String((int)(gps_data.altitude * 3.28084)), M5.Display.width() / 2, 123);
+      M5.Display.setFont(&fonts::Font0);
+    }
+    String direction;
+    if (gps_data.course >= 337.5 || gps_data.course < 22.5) {
+      direction = "North";
+    } else if (gps_data.course < 67.5) {
+      direction = "Northeast";
+    } else if (gps_data.course < 112.5) {
+      direction = "East";
+    } else if (gps_data.course < 157.5) {
+      direction = "Southeast";
+    } else if (gps_data.course < 202.5) {
+      direction = "South";
+    } else if (gps_data.course < 247.5) {
+      direction = "Southwest";
+    } else if (gps_data.course < 292.5) {
+      direction = "West";
+    } else {
+      direction = "Northwest";
+    }
+    M5.Display.fillRoundRect(10, 168, M5.Display.width() - 20, 62, 10, BLACK);
+    M5.Display.drawString("Course: " + direction, M5.Display.width() / 2, 175);
+    M5.Display.setFont(&fonts::FreeSans18pt7b);
+    M5.Display.drawString(String((int)gps_data.course), M5.Display.width() / 2, 192);
+    int course_text_width = (M5.Display.textWidth(String((int)gps_data.course)) / 2) + (M5.Display.width() / 2);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.drawCircle(course_text_width + 7, 198, 4, settings.theme_color);
+    M5.Display.drawCircle(course_text_width + 7, 198, 5, settings.theme_color);
   }
 }
 
@@ -685,17 +1163,25 @@ void screen_distance() {  // Displays the straight-line distance from the trip s
     String distance_str;
     if (settings.unit_distance_measurement == "Metric") {
       if (gps_trip.distance_from_start < 1000.0) {
-        distance_str = String((int)gps_trip.distance_from_start) + " m";
+        distance_str = String(gps_trip.distance_from_start, 0) + " m";
       } else {
-        distance_str = String(gps_trip.distance_from_start / 1000.0, 1) + " km";
+        if (gps_trip.distance_from_start > 10000) {
+          distance_str = String(gps_trip.distance_from_start / 1000.0, 0) + " km";
+        } else {
+          distance_str = String(gps_trip.distance_from_start / 1000.0, 1) + " km";
+        }
       }
     } else {
       double feet = gps_trip.distance_from_start * 3.28084;
       if (feet < 5280.0) {
-        distance_str = String((int)feet) + " ft";
+        distance_str = String(feet, 0) + " ft";
       } else {
         double miles = gps_trip.distance_from_start * 0.000621371;
-        distance_str = String(miles, 1) + " mi";
+        if (miles > 1000) {
+          distance_str = String(miles, 0) + " mi";
+        } else {
+          distance_str = String(miles, 1) + " mi";
+        }
       }
     }
     screen_header("Distance");
@@ -727,6 +1213,47 @@ void screen_distance() {  // Displays the straight-line distance from the trip s
 }
 
 void screen_route_stats() {  // Displays the accumulated route distance and average moving speed
+  if (M5.BtnA.wasPressed()) {
+    screen_route_i = screen_route_i + 1;
+    if (screen_route_i > 2) {
+      screen_route_i = 0;
+    }
+    draw_screen = true;    // Set draw_screen to true to indicate that the screen needs to be redrawn
+    toggle_screen = true;  // Set toggle_screen to true to indicate that the screen has been toggled
+  }
+
+  if (draw_screen) {
+    if (screen_route_i == 0) {
+      M5.Display.setRotation(3);  // Set display rotation to landscape orientation (3), with the blue button facing left
+    } else {
+      M5.Display.setRotation(0);  // Set display rotation to portrait orientation (0), with the blue button facing down
+    }
+  }
+
+  switch (screen_route_i) {
+    case 0:
+      screen_route_stats_1();
+      break;
+    case 1:
+      screen_route_stats_2();
+      break;
+    case 2:
+      screen_route_stats_3();
+      break;
+    default:
+      screen_route_stats_1();
+      screen_route_i = 0;
+      break;
+  }
+
+  if (screen_route_i != 0) {
+    M5.Display.setTextDatum(top_left);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.setTextColor(settings.theme_color);
+  }
+}
+
+void screen_route_stats_1() {
   if (draw_screen || toggle_screen) {
     screen_header("Route Stats");
     String distance_str;
@@ -759,6 +1286,174 @@ void screen_route_stats() {  // Displays the accumulated route distance and aver
       M5.Display.drawString(convert_speed(gps_trip.average_moving_speed, true), M5.Display.width() / 2, 100);
     }
     M5.Display.setTextDatum(top_left);
+  }
+}
+
+void screen_route_stats_2() {
+  if (draw_screen || toggle_screen) {
+    screen_header_vertical("Route Stats", true);
+    M5.Display.setTextSize(1);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.drawString("CURRENT SPEED - " + settings.units_speed_measurement, M5.Display.width() / 2, 25);
+    if (gps_data.speed > 999) {
+      M5.Display.setTextSize(1.1f);
+    } else {
+      M5.Display.setTextSize(1.3f);
+    }
+    M5.Display.setFont(&fonts::Font7);
+    M5.Display.drawString(convert_speed(gps_data.speed, false), M5.Display.width() / 2, 40);
+    M5.Display.drawLine(0, 110, M5.Display.width(), 110, settings.theme_color);
+    M5.Display.drawLine(M5.Display.width() / 2, 110, M5.Display.width() / 2, 175, settings.theme_color);
+    M5.Display.drawLine(0, 125, M5.Display.width(), 125, settings.theme_color);
+    int min_speed_bar = 0;
+    int middle_speed_bar = M5.Display.width() / 2;
+    int max_speed_bar = M5.Display.width();
+    int start_y_bar = 110;
+    int end_y_bar = 125;
+    float average_speed = gps_trip.average_moving_speed;
+    float current_speed = gps_data.speed;
+    float bar_size = 0;
+    if (gps_data.speed >= settings.min_moving_speed) {
+      if (current_speed < average_speed && average_speed > gps_trip.min_speed) {
+        bar_size = (average_speed - current_speed) / (average_speed - gps_trip.min_speed) * middle_speed_bar;  // Calculate the bar size proportionally between minimum and average speed
+        bar_size = constrain(bar_size, 0, middle_speed_bar);                                                   // Keep the bar within the available screen area
+        if (bar_size > 0) {
+          M5.Display.fillRect(middle_speed_bar - (int)bar_size, start_y_bar, (int)bar_size, end_y_bar - start_y_bar, settings.theme_color);  // Draw the bar to the left of the reference line
+        }
+      } else if (current_speed > average_speed) {
+        float max_range = gps_trip.max_speed - average_speed;  // Calculate the bar size proportionally to the speed difference
+        if (max_range > 0) {
+          bar_size = (current_speed - average_speed) / max_range * (max_speed_bar - middle_speed_bar);
+          bar_size = constrain(bar_size, 0, max_speed_bar - middle_speed_bar);  // Keep the bar within the available screen area
+          if (bar_size > 0) {
+            M5.Display.fillRect(middle_speed_bar, start_y_bar, (int)bar_size, end_y_bar - start_y_bar, settings.theme_color);  // Draw the bar to the right of the reference line
+          }
+        }
+      }
+    }
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.setTextSize(1);
+    M5.Display.drawString("SPEED MIN", M5.Display.width() / 4, 135);
+    M5.Display.drawString("SPEED MAX", ((M5.Display.width() / 4) * 3) + 3, 135);
+    M5.Display.setTextSize(2);
+    M5.Display.drawString(convert_speed(gps_trip.min_speed, false), M5.Display.width() / 4, 150);
+    M5.Display.drawString(convert_speed(gps_trip.max_speed, false), ((M5.Display.width() / 4) * 3) + 3, 150);
+    M5.Display.drawLine(0, 175, M5.Display.width(), 175, settings.theme_color);
+    M5.Display.setTextSize(1);
+    M5.Display.drawString("AVERAGE MOVING SPEED", M5.Display.width() / 2, 185);
+    M5.Display.setTextSize(1);
+    int average_speed_unit_width = M5.Display.textWidth(settings.units_speed_measurement);
+    M5.Display.setTextSize(4);
+    M5.Display.drawString(convert_speed(gps_trip.average_moving_speed, false), (M5.Display.width() / 2) - (average_speed_unit_width / 2), 200);
+    int average_speed_text_width = M5.Display.textWidth(convert_speed(gps_trip.average_moving_speed, false));
+    M5.Display.setTextSize(1);
+    M5.Display.drawString(settings.units_speed_measurement, (M5.Display.width() / 2) + (average_speed_text_width / 2) + 3, 221);
+  }
+}
+
+void screen_route_stats_3() {
+  if (draw_screen || toggle_screen) {
+    screen_header_vertical("Route Stats", true);
+    M5.Display.setTextSize(1);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.drawString("ROUTE DISTANCE", M5.Display.width() / 2, 25);
+    String distance_str;
+    String distance_unit;
+    if (settings.unit_distance_measurement == "Metric") {
+      if (gps_trip.route_distance < 1000.0) {
+        distance_str = String(gps_trip.route_distance, 0);
+        distance_unit = "m";
+      } else {
+        if (gps_trip.route_distance < 10000.0) {
+          distance_str = String(gps_trip.route_distance / 1000.0, 1);
+        } else {
+          distance_str = String(gps_trip.route_distance / 1000.0, 0);
+        }
+        distance_unit = "km";
+      }
+    } else {
+      double feet = gps_trip.route_distance * 3.28084;
+      if (feet < 5280.0) {
+        distance_str = String(feet, 0);
+        distance_unit = "ft";
+      } else {
+        double miles = gps_trip.route_distance * 0.000621371;
+        if (miles < 10.0) {
+          distance_str = String(miles, 1);
+        } else {
+          distance_str = String(miles, 0);
+        }
+        distance_unit = "mi";
+      }
+    }
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.setTextSize(2);
+    int distance_unit_width = M5.Display.textWidth(distance_unit);
+    M5.Display.setTextSize(0.8f);
+    M5.Display.setFont(&fonts::Font7);
+    M5.Display.drawString(distance_str, (M5.Display.width() / 2) - (distance_unit_width / 2), 40);
+    int distance_text_width = M5.Display.textWidth(distance_str);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.setTextSize(2);
+    M5.Display.drawString(distance_unit, (M5.Display.width() / 2) + (distance_text_width / 2) + 3, 62);
+    M5.Display.drawLine(0, 90, M5.Display.width(), 90, settings.theme_color);
+    M5.Display.setTextSize(1);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.drawString("STRAIGHT-LINE DISTANCE", M5.Display.width() / 2, 100);
+    if (settings.unit_distance_measurement == "Metric") {
+      if (gps_trip.distance_from_start < 1000.0) {
+        distance_str = String((int)gps_trip.distance_from_start);
+        distance_unit = "m";
+      } else {
+        if (gps_trip.distance_from_start < 10000.0) {
+          distance_str = String(gps_trip.distance_from_start / 1000.0, 1);
+        } else {
+          distance_str = String(gps_trip.distance_from_start / 1000.0, 0);
+        }
+        distance_unit = "km";
+      }
+    } else {
+      double feet = gps_trip.distance_from_start * 3.28084;
+      if (feet < 5280.0) {
+        distance_str = String((int)feet);
+        distance_unit = "ft";
+      } else {
+        double miles = gps_trip.distance_from_start * 0.000621371;
+        if (miles < 10.0) {
+          distance_str = String(miles, 1);
+        } else {
+          distance_str = String(miles, 0);
+        }
+        distance_unit = "mi";
+      }
+    }
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.setTextSize(2);
+    distance_unit_width = M5.Display.textWidth(distance_unit);
+    M5.Display.setTextSize(0.8f);
+    M5.Display.setFont(&fonts::Font7);
+    M5.Display.drawString(distance_str, (M5.Display.width() / 2) - (distance_unit_width / 2), 115);
+    distance_text_width = M5.Display.textWidth(distance_str);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.setTextSize(2);
+    M5.Display.drawString(distance_unit, (M5.Display.width() / 2) + (distance_text_width / 2) + 3, 137);
+    M5.Display.drawLine(0, 165, M5.Display.width(), 165, settings.theme_color);
+    M5.Display.setTextSize(1);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.drawString("TRIP TIME", M5.Display.width() / 2, 175);
+    unsigned long elapsed_millis = millis() - gps_trip.trip_start_millis;
+    unsigned long elapsed_seconds = elapsed_millis / 1000;
+    unsigned long elapsed_hours = elapsed_seconds / 3600;
+    unsigned long elapsed_minutes = (elapsed_seconds % 3600) / 60;
+    unsigned long elapsed_secs = elapsed_seconds % 60;
+    String elapsed_time = (elapsed_hours < 10 ? "0" : "") + String(elapsed_hours) + ":" + (elapsed_minutes < 10 ? "0" : "") + String(elapsed_minutes) + ":" + (elapsed_secs < 10 ? "0" : "") + String(elapsed_secs);
+    M5.Display.setTextSize(0.5f);
+    if (elapsed_hours < 1) {
+      elapsed_time = (elapsed_minutes < 10 ? "0" : "") + String(elapsed_minutes) + ":" + (elapsed_secs < 10 ? "0" : "") + String(elapsed_secs);
+      M5.Display.setTextSize(0.8f);
+    }
+    M5.Display.setFont(&fonts::Font7);
+    M5.Display.drawString(elapsed_time, M5.Display.width() / 2, 190);
   }
 }
 
@@ -1268,11 +1963,17 @@ void screen_settings_reset_trip() {
 
 void screen_settings_exit() {
   if (M5.BtnA.wasPressed()) {
+    save_settings();
     settings_mode = false;
     toggle_screen = true;
+    draw_screen = true;
     toggle_screen_settings = true;
     screen_i = 0;
-    save_settings();
+    if (screen_general_i == 0) {
+      M5.Display.setRotation(3);  // Standard rotation (screen horizontal with button A on the left)
+    } else {
+      M5.Display.setRotation(0);  // Vertical screen (with button A at the bottom)
+    }
   }
   if (draw_screen || toggle_screen_settings) {
     screen_header("Exit");
@@ -1314,28 +2015,56 @@ void screen_header(String title) {  // Function responsible for drawing the head
     M5.Display.setTextSize(2);                                                                            // Setting the text size to 2
     M5.Display.setTextColor(BLACK);                                                                       // Setting the text color to black
     M5.Display.setTextDatum(top_left);                                                                    // Setting the text datum to top and left
+    M5.Display.setFont(&fonts::Font0);                                                                    // Ensure it is in the default font
     M5.Display.drawString(title, 10, 5);                                                                  // Print the title centered at the top
     M5.Display.setTextDatum(top_right);                                                                   // Setting the text datum to top and right
     if (M5.Power.isCharging() || data_comparison.battery_charging) {                                      // Check if it is charging
-      M5.Display.drawString("+" + String(M5.Power.getBatteryLevel()) + "%", M5.Display.width() - 10, 5);  // Prints the + and the battery percentage.
+      M5.Display.drawString("+" + String(M5.Power.getBatteryLevel()) + "%", M5.Display.width() - 10, 5);  // Prints the + and the battery percentage
     } else {                                                                                              // If it is not charging
       M5.Display.drawString(String(M5.Power.getBatteryLevel()) + "%", M5.Display.width() - 10, 5);        // prints the battery percentage
     }
     data_comparison.battery_percentage = M5.Power.getBatteryLevel();
     data_comparison.battery_charging = M5.Power.isCharging();
   }
-  M5.Display.fillRect(0, 25, 240, 110, BLACK);  // Draw a black square
-  // Check if the timeout warning screen should not be displayed and if the timeout is longer than acceptable
-  if (system_state.display_timeout_warning == false && millis() - gps_time.last_update_millis >= (settings.gps_timeout_seconds * 1000)) {
-    M5.Display.fillTriangle(235, 130, 214, 130, 225, 109, YELLOW);  // Draw a yellow triangle
-    M5.Display.setTextDatum(middle_center);
-    M5.Display.setTextSize(2);
-    M5.Display.setTextColor(BLACK);
-    M5.Display.drawString("!", 226, 123);
-    // Shows a warning icon when GNSS communication has timed out but the warning screen is not active
-  }
+  M5.Display.fillRect(0, 25, 240, 110, BLACK);    // Draw a black square
   M5.Display.setTextColor(settings.theme_color);  // Setting the text color to settings.theme_color
   M5.Display.setTextDatum(top_left);              // Returning the text datum to the standard
+}
+
+void screen_header_vertical(String title, bool bg_color) {  // It does the same thing as the standard function, but with the screen in portrait mode
+  if (toggle_screen || toggle_screen_settings || data_comparison.battery_percentage != M5.Power.getBatteryLevel() || data_comparison.battery_charging != M5.Power.isCharging()) {
+    if (bg_color) {
+      M5.Display.fillRect(0, 0, M5.Display.width(), 15, settings.theme_color);
+    } else {
+      M5.Display.fillRect(0, 0, M5.Display.width(), 15, BLACK);
+    }
+    M5.Display.setTextSize(1);
+    if (bg_color) {
+      M5.Display.setTextColor(BLACK);
+    } else {
+      M5.Display.setTextColor(settings.theme_color);
+    }
+    M5.Display.setTextDatum(top_left);
+    M5.Display.setFont(&fonts::Font0);
+    M5.Display.drawString(title, 5, 4);
+    M5.Display.setTextDatum(top_right);
+    if (M5.Power.isCharging() || data_comparison.battery_charging) {
+      M5.Display.drawString("+" + String(M5.Power.getBatteryLevel()) + "%", M5.Display.width() - 5, 4);
+    } else {
+      M5.Display.drawString(String(M5.Power.getBatteryLevel()) + "%", M5.Display.width() - 5, 4);
+    }
+    data_comparison.battery_percentage = M5.Power.getBatteryLevel();
+    data_comparison.battery_charging = M5.Power.isCharging();
+  }
+  if (bg_color) {
+    M5.Display.fillRect(0, 15, M5.Display.width(), M5.Display.height() - 15, BLACK);
+  } else {
+    if (toggle_screen) {
+      M5.Display.fillRect(0, 15, M5.Display.width(), M5.Display.height() - 15, settings.theme_color);
+    }
+  }
+  M5.Display.setTextColor(settings.theme_color);
+  M5.Display.setTextDatum(top_center);
 }
 
 void set_baudrate() {
