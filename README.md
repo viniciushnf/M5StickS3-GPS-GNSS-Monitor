@@ -56,6 +56,10 @@ The General section includes four screen layouts: one landscape layout and three
 
 Press **Button A** to cycle through the available General layouts.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-general.gif" alt="Screens General" width="40%">
+</p>
+
 ### 📍 Position
 
 Displays the current geographic coordinates.
@@ -89,6 +93,10 @@ The Route Stats section includes three screen layouts: one landscape layout and 
 One of the portrait layouts includes a graphical indicator that compares current speed with the recorded average, minimum, and maximum speeds.
 
 Press **Button A** to cycle through the available Route Stats layouts.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-route-stats.gif" alt="Screens General" width="40%">
+</p>
 
 The firmware can calculate:
 * Total route distance
