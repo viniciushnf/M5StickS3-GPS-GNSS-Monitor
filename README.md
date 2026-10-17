@@ -57,7 +57,7 @@ The General section includes four screen layouts: one landscape layout and three
 Press **Button A** to cycle through the available General layouts.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-general.gif" alt="Screens General" width="40%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-general.gif" alt="Screens General" width="30%">
 </p>
 
 ### 📍 Position
@@ -95,7 +95,7 @@ One of the portrait layouts includes a graphical indicator that compares current
 Press **Button A** to cycle through the available Route Stats layouts.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-route-stats.gif" alt="Screens General" width="40%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-route-stats.gif" alt="Screens General" width="30%">
 </p>
 
 The firmware can calculate:
