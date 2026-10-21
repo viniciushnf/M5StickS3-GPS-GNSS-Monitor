@@ -1,11 +1,12 @@
-// GPS & GNSS Monitor for M5StickS3
+// GPS & GNSS Monitor
+// Firmware Version: 1.2
 
-// A GPS/GNSS monitoring firmware developed for the M5StickS3.
-// It receives and displays real-time data from a connected GPS/GNSS module,
-// including position, altitude, speed, course, satellites, HDOP, date, and time.
-// The firmware also provides trip and route statistics, configurable units,
-// coordinate and time formats, timezone selection, display settings,
-// configurable GPS/GNSS baud rate, and persistent settings storage using NVS.
+// GPS & GNSS Monitor is a firmware for the M5StickS3 that receives and displays
+// real-time data from a connected GPS/GNSS module. It provides multiple screens
+// for monitoring position, altitude, speed, course, satellite reception, HDOP,
+// date, and time, as well as trip and route statistics. The firmware supports
+// configurable units, coordinate and time formats, timezone, display settings,
+// UART pins and baud rate, with settings saved persistently in NVS.
 
 // Developed by ViniciusHNF
 // https://github.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor
@@ -17,11 +18,11 @@
 // For instructions on configuring the M5StickS3 in Arduino IDE, visit:
 // https://docs.m5stack.com/en/arduino/m5sticks3/program
 
-// GPS/GNSS TX -> GPIO 44 (GPIO RX)
-// GPS/GNSS RX -> GPIO 43 (GPIO TX)
+// For the M5StickS3, the recommended GPIO configuration depends on the connection interface.
+// Hat2-Bus: Set G44 as RX and G43 as TX. Connect the GPS/GNSS module's TX -> G44 and RX -> G33.
+// HY2.0-4P: Set G10 as RX and G9 as TX. Connect the GPS/GNSS module's TX -> G10 and RX -> G9.
 
-#define GPS_RX_PIN 44  // The TX pin of the GPS/GNSS module must be connected to GPIO 44
-#define GPS_TX_PIN 43  // The RX pin of the GPS/GNSS module must be connected to GPIO 43
+#define VERSION_FIRMWARE 1.2  // Firmware Version
 
 #include <HardwareSerial.h>  // Library for UART serial communication
 #include <M5Unified.h>       // Library for controlling M5Stack hardware
@@ -32,27 +33,34 @@ unsigned long button_b_press_time = 0;  // Variable to store the time when butto
 bool button_b_pressed = false;          // Variable that checks if button B is being pressed
 int time_long_press_button_b = 300;     // Variable that stores the duration for which button B must be held down to be considered a long press
 
-byte screen_i = 0;          // Variable to control which screen will be displayed
-bool draw_screen = true;    // Variable to control when the screen needs to be redrawn
-bool toggle_screen = true;  // Variable to control when the screen has been toggled
+byte screen_i = 0;                          // Variable to control which screen will be displayed
+bool draw_screen = true;                    // Variable to control when the screen needs to be redrawn
+bool toggle_screen = true;                  // Variable to control when the screen has been toggled
+bool refresh_screen_exit_settings = false;  // Forces the screen to update after exiting the settings. This variable is necessary because the draw_screen and toggle_screen variables are reset to false at the end of the loop
 
 bool toggle_screen_settings = true;  // Variable to control when the settings screen has been toggled
 bool settings_mode = false;          // Variable to control when the settings mode is active
 byte screen_settings_i = 0;          // Variable to control which settings screen will be displayed
 byte screen_general_i = 0;           // Variable to control which general screen will be displayed
 byte screen_route_i = 0;             // Variable to control which route statistics screen will be displayed
+bool screen_about_i = 0;             // Variable to control which about screen will be displayed
 
-int baudrate_options[] = {9600, 19200, 38400, 57600, 115200};                                          // Array of baud rates
-uint16_t theme_color_options[] = {WHITE, RED, GREEN, BLUE, YELLOW, CYAN, MAGENTA};                     // Array of available theme colors
-String theme_color_options_string[] = {"WHITE", "RED", "GREEN", "BLUE", "YELLOW", "CYAN", "MAGENTA"};  // Array of available theme colors in string format
-String units_speed_measurement_options[] = {"km/h", "mph", "knots", "m/s"};                            // Array of available speed measurement units
+int gpio_options[] = {1, 2, 9, 10, 13, 15, 26, 32, 33, 36, 43, 44};          // Array of GPIO options that can be TX or RX
+int baudrate_options[] = {9600, 19200, 38400, 57600, 115200};                // Array of baud rates
+String units_speed_measurement_options[] = {"km/h", "mph", "knots", "m/s"};  // Array of available speed measurement units
+int screen_timeout_options[] = {0, 10, 30, 60, 300, 600};                    // Screen timeout values in seconds
+// Array of available theme colors
+uint16_t theme_color_options[] = {WHITE, BLACK, RED, GREEN, BLUE, YELLOW, CYAN, MAGENTA, 0xFDA0, 0x780F, 0xFE19, 0x000F, 0x9A60, 0x8410};
+// Array of available theme colors in string format
+String theme_color_options_string[] = {"WHITE", "BLACK", "RED", "GREEN", "BLUE", "YELLOW", "CYAN", "MAGENTA", "ORANGE", "PURPLE", "PINK", "NAVY", "BROWN", "GRAY"};
 // Array of available timezones
 String timezone_options[] = {"UTC-12:00", "UTC-11:00", "UTC-10:00", "UTC-09:30", "UTC-09:00", "UTC-08:00", "UTC-07:00", "UTC-06:00", "UTC-05:00", "UTC-04:00", "UTC-03:30", "UTC-03:00", "UTC-02:00", "UTC-01:00", "UTC+00:00", "UTC+01:00", "UTC+02:00", "UTC+03:00", "UTC+03:30", "UTC+04:00", "UTC+04:30", "UTC+05:00", "UTC+05:30", "UTC+05:45", "UTC+06:00", "UTC+06:30", "UTC+07:00", "UTC+08:00", "UTC+08:45", "UTC+09:00", "UTC+09:30", "UTC+10:00", "UTC+10:30", "UTC+11:00", "UTC+12:00", "UTC+12:45", "UTC+13:00", "UTC+14:00"};
-int screen_timeout_options[] = {0, 10, 30, 60, 300, 600};  // Screen timeout values in seconds
 
 bool new_gps_position = false;        // Indicates that a new valid GPS/GNSS position was received and trip/route data must be updated
 bool gps_serial_initialized = false;  // Variable that stores information on whether serial communication has already been initiated. Prevents calling end() on the UART before it has been initialized
 double last_speed_course = 0;         // Variable that stores the last speed value displayed on the course screen to determine whether the screen needs to be redrawn and the speed reset to 0
+byte horizontal_screen_rotation = 3;  // Stores the rotation value for horizontal screens
+byte vertical_screen_rotation = 0;    // Stores the rotation value for vertical screens
 
 struct struct_gps_data {  // Structure for storing data obtained by the GPS/GNSS module
   double latitude;
@@ -89,8 +97,12 @@ struct struct_gps_TripData {  // Travel data structure
   double max_speed;
   double min_speed;
   // Session
-  unsigned long trip_start_millis;
-  unsigned long last_millis_shown_info;
+  unsigned long trip_start_millis;                  // Session start timestamp, in milliseconds since the device started
+  unsigned long last_millis_shown_info;             // Timestamp of the last displayed session information update
+  unsigned long time_in_motion_millis;              // Total accumulated time spent in motion, in milliseconds
+  unsigned long last_time_in_motion_update_millis;  // Timestamp of the last time-in-motion counter update
+  unsigned long last_speed_update_millis = 0;       // Timestamp of the last valid GPS/GNSS speed update
+  bool is_moving = false;                           // Indicates whether the latest valid speed measurement meets the minimum movement threshold
 };
 
 struct struct_gps_time {  // Date and time structure with timezone and time stamps
@@ -123,31 +135,40 @@ struct struct_system_state {                        // Structure for storing tem
   bool display_timeout_warning;                     // Stores information on whether the warning is being displayed
   unsigned long last_millis_shown_warning_timeout;  // Store the value of the last time the notice was updated. The purpose is to know when to update again
   unsigned long last_button_interaction_millis;     // Stores the time of the last button interaction
+  unsigned long last_screen_update_millis;          // Stores the millis() timestamp of the last screen update, used to determine when the screen should update again based on settings.screen_update_interval_seconds
   bool screen_on;                                   // Stores information on whether the screen is on
+  bool first_loop;                                  // Stores the information from the first loop
 };
 
-struct struct_settings {             // Structure for storing settings
-  int module_baudrate;               // Selected Baud rate
-  uint16_t theme_color;              // Variable to control the theme color of the application
-  String coord_format;               // Variable for controlling the coordinate format. Decimal || DMS || DM
-  String units_speed_measurement;    // Variable to control the speed measurement unit of the application
-  String unit_altitude_measurement;  // Variable to control the altitude measurement unit of the application. Meters || Feet
-  String unit_distance_measurement;  // Variable for controlling the distance unit of measurement. Metric || Imperial
-  String timezone;                   // Variable that stores the selected timezone
-  String time_format;                // Variable to control the time format. 24-hour || 12-hour
-  String date_format;                // Variable to control the date format. YYYY-MM-DD || MM/DD/YYYY || DD/MM/YYYY
-  byte screen_brightness;            // Screen brightness percentage. 100 = 100% brightness
-  int screen_timeout_seconds;        // Time in seconds for the screen to turn off when there is no button interaction
-  int gps_timeout_seconds;           // Time in seconds to consider that the GPS/GNSS module has not sent new information for a long time
-  double min_moving_speed;           // Minimum GPS/GNSS speed in km/h required to record route distance and moving time
+struct struct_settings {               // Structure for storing settings
+  int module_baudrate;                 // Selected Baud rate
+  int gpio_rx;                         // GPIO selected to receive data for the GPS/GNSS module
+  int gpio_tx;                         // GPIO selected to transmit data to the GPS/GNSS module
+  uint16_t theme_color;                // Variable to control the theme color of the application
+  uint16_t background_color;           // Variable to control the background color of the application
+  String coord_format;                 // Variable for controlling the coordinate format. Decimal || DMS || DM
+  String units_speed_measurement;      // Variable to control the speed measurement unit of the application
+  String unit_altitude_measurement;    // Variable to control the altitude measurement unit of the application. Meters || Feet
+  String unit_distance_measurement;    // Variable for controlling the distance unit of measurement. Metric || Imperial
+  String timezone;                     // Variable that stores the selected timezone
+  String time_format;                  // Variable to control the time format. 24-hour || 12-hour
+  String date_format;                  // Variable to control the date format. YYYY-MM-DD || MM/DD/YYYY || DD/MM/YYYY
+  byte screen_brightness;              // Screen brightness percentage. 100 = 100% brightness
+  int screen_timeout_seconds;          // Time in seconds for the screen to turn off when there is no button interaction
+  int gps_timeout_seconds;             // Time in seconds to consider that the GPS/GNSS module has not sent new information for a long time
+  int screen_update_interval_seconds;  // Screen update interval in seconds. Set to 0 for automatic updates whenever new GPS/GNSS data is received
+  double min_moving_speed;             // Minimum GPS/GNSS speed in km/h required to record route distance and moving time
+  bool flip_screen_horizontally;       // Rotates horizontal screens by 180° when enabled
+  bool flip_screen_vertically;         // Rotates vertical screens by 180° when enabled
+  bool rotate_screen_90_degrees;       // Rotates the screen by +90° when enabled
 };
 
-struct_gps_data gps_data = {};
-struct_gps_TripData gps_trip = {};
-struct_gps_time gps_time = {};
-struct_data_comparison data_comparison = {};
-struct_settings settings = {};
-struct_system_state system_state = {};
+struct_gps_data gps_data = {};                // Stores the GPS/GNSS data received from the module, including position, altitude, speed, course, satellite count, HDOP, and date and time
+struct_gps_TripData gps_trip = {};            // Stores trip and route information, including traveled distances, starting position, average moving speed, movement time, and minimum and maximum values
+struct_gps_time gps_time = {};                // Stores the date and time obtained from the GPS/GNSS module, including the first position fix timestamp and the timestamp of the last update
+struct_data_comparison data_comparison = {};  // Stores previous or reference values of GPS/GNSS data, along with additional display and battery information, for comparing changes in system data
+struct_settings settings = {};                // Stores the user's configuration preferences, including communication settings, GPIO pins, display appearance, units of measurement, time zone, and timeouts
+struct_system_state system_state = {};        // Stores temporary system states and timestamps used to manage display updates, screen timeout warnings, button interactions, and screen power status
 
 TinyGPSPlus gps;                          // Creates the TinyGPSPlus object for parsing GPS/GNSS data
 HardwareSerial gps_serial(1);             // Creates a hardware UART serial interface on UART1
@@ -155,23 +176,28 @@ Preferences preferences;                  // Creates the Preferences object for 
 #define SETTINGS_NAMESPACE "gpssettings"  // Defines the namespace used to store firmware settings in NVS
 
 void setup() {
-  M5.begin();                                                                                   // Initializes the M5 library
-  M5.Display.setBrightness(percentage_to_byte(100));                                            // Sets the splash screen brightness to 100%
-  M5.Display.fillScreen(BLACK);                                                                 // Fill the screen with the color black
-  M5.Display.setRotation(3);                                                                    // Sets the display rotation to 270 degrees (rotation mode 3), adjusting the screen orientation to match the desired layout
-  M5.Display.setTextSize(3);                                                                    // Setting the text size to 3
-  M5.Display.setTextColor(WHITE);                                                               // Setting the text color to WHITE
-  M5.Display.setTextDatum(middle_center);                                                       // Setting the text datum to middle and center
-  M5.Display.drawString("GPS & GNSS", M5.Display.width() / 2, (M5.Display.height() / 2) - 20);  // The text "GPS & GNSS" is displayed in the middle of the screen
-  M5.Display.drawString("Monitor", M5.Display.width() / 2, (M5.Display.height() / 2) + 20);     // The text "Monitor" is displayed in the middle of the screen
-  M5.Display.setTextDatum(top_left);                                                            // Returning the text datum to the standard
-  delay(3000);                                                                                  // Waiting time of 3000 milliseconds
+  M5.begin();                                                                                              // Initializes the M5 library
+  M5.Display.setBrightness(percentage_to_byte(100));                                                       // Sets the splash screen brightness to 100%
+  M5.Display.fillScreen(BLACK);                                                                            // Fill the screen with the color black
+  M5.Display.setRotation(horizontal_screen_rotation);                                                      // Sets the display rotation to 270 degrees (rotation mode 3), adjusting the screen orientation to match the desired layout
+  M5.Display.setTextSize(3);                                                                               // Setting the text size to 3
+  M5.Display.setTextColor(WHITE);                                                                          // Setting the text color to WHITE
+  M5.Display.setTextDatum(top_center);                                                                     // Setting the text datum to top and center
+  M5.Display.drawString("GPS & GNSS", M5.Display.width() / 2, 20);                                         // Print "GPS and GNSS" centered horizontally at Y = 20
+  M5.Display.drawString("Monitor", M5.Display.width() / 2, 55);                                            // Print "Monitor" centered horizontally at Y = 55
+  M5.Display.setTextSize(1);                                                                               // Setting the text size to 2
+  M5.Display.drawString("Firmware Version: " + String(VERSION_FIRMWARE, 1), M5.Display.width() / 2, 100);  // Prints the firmware version
+  M5.Display.drawString("github.com/viniciushnf", M5.Display.width() / 2, 120);                            // Print the GitHub link
+  M5.Display.setTextDatum(top_left);                                                                       // Returning the text datum to the standard
+  delay(3000);                                                                                             // Waiting time of 3000 milliseconds (3 seconds)
 
   load_settings();             // Function that retrieves persistent settings and saves them to variables
   if (!validate_settings()) {  // Checks if the settings are valid
+    basic_settings();          // Calls the function that defines the initial settings: baud rate, GPIO RX, and GPIO TX
     save_settings();           // If any configuration is invalid, save the settings with valid parameters
   }
 
+  apply_rotation();                                                          // Applies screen rotation and flip settings
   M5.Display.setTextColor(settings.theme_color);                             // Setting the text color to settings.theme_color
   M5.Display.setBrightness(percentage_to_byte(settings.screen_brightness));  // Set the screen brightness based on the percentage value
   system_state.screen_on = true;                                             // Sets system_state.screen_on to true, which means the screen is on
@@ -182,17 +208,42 @@ void setup() {
   gps_serial.begin(              // Initializes the UART to be used by the GPS/GNSS
       settings.module_baudrate,  // Baud rate
       SERIAL_8N1,                // Configuration: 8 bits, no parity, 1 stop bit
-      GPS_RX_PIN,                // RX
-      GPS_TX_PIN                 // TX
+      settings.gpio_rx,          // GPIO RX pin
+      settings.gpio_tx           // GPIO TX pin
   );
   gps_serial_initialized = true;  // Sets gps_serial_initialized to true. If another serial communication needs to be initiated, the variable indicates that the previous one must be terminated
 
   gps_data.hdop_quality = "No Fix";                        // The HDOP quality is set to "No Fix"
   system_state.display_timeout_warning = false;            // system_state.display_timeout_warning is set to false
   system_state.last_button_interaction_millis = millis();  // Stores the value of millis() so that the screen timeout only starts counting at the end of setup()
+  system_state.first_loop = true;                          // Indicates that this is the first time the firmware will execute the loop
 }
 
 void loop() {
+  if (gps_serial.available() > 0) {  // Checks for new data from the GPS/GNSS module
+    update_gps_data();               // Updates GPS data
+    if (new_gps_position) {          // Checks for a new position
+      update_gps_trip();             // Updates trip data such as distance from the starting point and minimum/maximum values
+      update_gps_route();            // Updates route statistics such as traveled distance and average moving speed
+      new_gps_position = false;      // Sets new_gps_position to false. This ensures that the firmware only updates the Trip and Route when new information is available from the GPS/GNSS module
+    }
+  }
+  update_time_in_motion();  // Function that updates the time spent in motion
+
+  if (settings.screen_update_interval_seconds != 0) {                                                             // Check that the screen update interval is not set to automatic
+    if ((settings.screen_update_interval_seconds * 1000) >= millis() - system_state.last_screen_update_millis) {  // Converts the screen update interval into milliseconds and checks whether it is equal to or greater than the time that has elapsed since the last update
+      draw_screen = false;                                                                                        // Set draw_screen to false. This ensures that new information from the GPS/GNSS module does not update the screen
+    } else {                                                                                                      // If the time interval is greater than the screen update interval
+      draw_screen = true;                                                                                         // Forces a screen refresh
+    }
+    // Switching between screens and settings triggers an automatic screen refresh, regardless of the screen update interval
+  }
+
+  if (system_state.first_loop) {      // Check if it is the first loop
+    draw_screen = true;               // Forces the screen to refresh
+    system_state.first_loop = false;  // Indicates that this is no longer the first loop, so there is no need to force a screen refresh as would be required for the initial loop
+  }
+
   M5.update();  // Updates the state of the M5StickS3 hardware, especially buttons and input events
 
   if (M5.BtnB.wasPressed()) {        // Checks if button B was pressed.
@@ -200,7 +251,7 @@ void loop() {
     button_b_pressed = true;         // button_b_pressed is set to true
   }
 
-  if (settings_mode == false && system_state.display_timeout_warning == false) {  // If configuration mode is disabled and if the timeout warning is not displayed
+  if (settings_mode == false && (system_state.display_timeout_warning == false || settings.gps_timeout_seconds == 0)) {  // If configuration mode is disabled and if the timeout warning is not displayed
     // Checks if button B has been released and button_b_pressed is true, or if button B is still pressed, if it has been pressed for longer than time_long_press_button_b and button_b_pressed is true
     if ((M5.BtnB.wasReleased() && button_b_pressed) || (M5.BtnB.isPressed() && millis() - button_b_press_time >= time_long_press_button_b && button_b_pressed)) {
       if (millis() - button_b_press_time < time_long_press_button_b) {  // If the time the button B was pressed is less than time_long_press_button_b
@@ -215,23 +266,21 @@ void loop() {
       button_b_pressed = false;  // button_b_pressed is set to false, as the screen has already been toggled
       draw_screen = true;        // Set draw_screen to true to indicate that the screen needs to be redrawn
       toggle_screen = true;      // Set toggle_screen to true to indicate that the screen has been toggled
+      // If the current screen is the General screen and the general screen index is greater than 0, or if the current screen is the Route Statistics screen and the route statistics screen index is greater than 0
       if ((screen_i == 0 && screen_general_i > 0) || (screen_i == 5 && screen_route_i > 0)) {
-        // If the current screen is the General screen and the general screen index is greater than 0, or if the current screen is the Route Statistics screen and the route statistics screen index is greater than 0
-        M5.Display.setRotation(0);  // Vertical screen (with button A at the bottom)
+        M5.Display.setRotation(vertical_screen_rotation);  // Vertical screen (with button A at the bottom or top)
       } else {
-        M5.Display.setRotation(3);  // Standard rotation (screen horizontal with button A on the left)
+        M5.Display.setRotation(horizontal_screen_rotation);  // Standard rotation (screen in landscape orientation, with button A on the left or the right)
       }
     }
   }
 
-  if (gps_serial.available() > 0) {  // Checks for new data from the GPS/GNSS module
-    update_gps_data();               // Updates GPS data
-    if (new_gps_position) {          // Checks for a new position
-      update_gps_trip();             // Updates trip data such as distance from the starting point and minimum/maximum values
-      update_gps_route();            // Updates route statistics such as traveled distance and average moving speed
-      new_gps_position = false;
-    }
-    draw_screen = true;  // indicates that the screen needs to be redrawn because there are GPS updates
+  // Forces a screen refresh when exiting settings or the communication notice
+  if (refresh_screen_exit_settings) {  // Check whether you have exited the settings (or the communication notice)
+    // Forces a screen refresh within this loop, even without the need to press a button or receive a new update from the GPS/GNSS module
+    draw_screen = true;                    // Forces the screen to refresh
+    toggle_screen = true;                  // Forces the screen to refresh
+    refresh_screen_exit_settings = false;  // Set to false to avoid updating the screen during each iteration of the loop
   }
 
   // Checks if the screen timeout is enabled and if the time elapsed since the last button press exceeds the screen timeout
@@ -264,15 +313,15 @@ void loop() {
     system_state.display_timeout_warning = false;  // Remove Communication Warning
   }
 
-  if (system_state.display_timeout_warning) {  // Whether the warning should be displayed on the screen
+  if (settings.gps_timeout_seconds != 0 && system_state.display_timeout_warning) {  // Whether the warning should be displayed on the screen
     // The screen must be redrawn every second to show the duration of the communication issues
-    if (millis() - system_state.last_millis_shown_warning_timeout > 1000) {
-      system_state.last_millis_shown_warning_timeout = millis();
-      draw_screen = true;
+    if (millis() - system_state.last_millis_shown_warning_timeout > 1000) {  // Checks whether the time interval is greater than 1 second
+      system_state.last_millis_shown_warning_timeout = millis();             // Updates the variable with the current millis()
+      draw_screen = true;                                                    // Indicates that the screen needs to be updated
     }
     if (draw_screen) {
-      M5.Display.setRotation(3);  // Standard rotation (screen horizontal with button A on the left)
-      screen_header("Warning");
+      M5.Display.setRotation(horizontal_screen_rotation);  // Standard rotation (screen in landscape orientation, with button A on the left or the right)
+      screen_header("Warning");                            // Draws the header with the title "Warning"
       M5.Display.setTextSize(2);
       M5.Display.setTextDatum(top_center);
       M5.Display.drawString("Communication", M5.Display.width() / 2, 35);
@@ -283,13 +332,14 @@ void loop() {
       draw_screen = false;  // draw_screen is set to false so the screen isn't drawn every time
       if ((screen_i == 0 && screen_general_i > 0) || (screen_i == 5 && screen_route_i > 0)) {
         // If the current screen is the General screen and the general screen index is greater than 0, or if the current screen is the Route Statistics screen and the route statistics screen index is greater than 0
-        M5.Display.setRotation(0);  // Vertical screen (with button A at the bottom)
+        M5.Display.setRotation(vertical_screen_rotation);  // Vertical screen (with button A at the bottom or top)
       }
     }
     if (M5.BtnA.wasPressed()) {                      // If button A was pressed
       system_state.display_timeout_warning = false;  // Dismiss the warning
-      toggle_screen = true;
-      draw_screen = true;
+      draw_screen = true;                            // Forces the screen to refresh
+      toggle_screen = true;                          // Forces the screen to refresh
+      refresh_screen_exit_settings = true;           // // Forces the screen to refresh on the next loop, even without the need to press a button or receive a new update from the GPS/GNSS module
     }
   } else {
     if (system_state.screen_on) {  // Checks if the screen is on
@@ -310,43 +360,46 @@ void update_gps_data() {                // Function responsible for verifying an
     gps.encode(gps_serial.read());      // reads data from the GPS/GNSS module
   }
   if (gps.location.isUpdated() && gps.location.isValid()) {  // Position
-    gps_data.latitude = gps.location.lat();
-    gps_data.longitude = gps.location.lng();
-    gps_time.last_update_millis = millis();  // Stores the millis() value where the last valid information was received
-    new_gps_position = true;
-    if (gps_time.first_fix_millis == 0) {
-      gps_time.first_fix_millis = millis();  // Stores the time of the first valid position fix since startup
+    gps_data.latitude = gps.location.lat();                  // Updates the latitude
+    gps_data.longitude = gps.location.lng();                 // Updates the longitude
+    gps_time.last_update_millis = millis();                  // Stores the millis() value where the last valid information was received
+    new_gps_position = true;                                 // Indicates that there is a new position
+    if (gps_time.first_fix_millis == 0) {                    // Checks whether a valid position did not exist
+      gps_time.first_fix_millis = millis();                  // Stores the time of the first valid position fix since startup
     }
   }
   if (gps.altitude.isUpdated() && gps.altitude.isValid()) {  // Altitude
-    gps_data.altitude = gps.altitude.meters();
-    gps_time.last_update_millis = millis();  // Stores the millis() value where the last valid information was received
+    gps_data.altitude = gps.altitude.meters();               // Updates the altitude in meters
+    gps_time.last_update_millis = millis();                  // Stores the millis() value where the last valid information was received
   }
-  if (gps.speed.isUpdated() && gps.speed.isValid()) {  // Speed
-    gps_data.speed = gps.speed.kmph();
+  if (gps.speed.isUpdated() && gps.speed.isValid()) {                  // Check if the speed has updated and if it is valid
+    gps_data.speed = gps.speed.kmph();                                 // Stores the current speed in kilometers per hour
+    gps_trip.last_speed_update_millis = millis();                      // Records the timestamp of the latest valid speed update
+    gps_trip.is_moving = gps_data.speed >= settings.min_moving_speed;  // Determines whether the current speed meets the minimum movement threshold
   }
   if (gps.course.isUpdated() && gps.course.isValid()) {  // Course
-    gps_data.course = gps.course.deg();
+    gps_data.course = gps.course.deg();                  // Update the course in degrees
   }
   if (gps.satellites.isUpdated() && gps.satellites.isValid()) {  // Satellites
-    gps_data.satellites = gps.satellites.value();
-    gps_time.last_update_millis = millis();  // Stores the millis() value where the last valid information was received
+    gps_data.satellites = gps.satellites.value();                // Updates the number of satellites
+    gps_time.last_update_millis = millis();                      // Stores the millis() value where the last valid information was received
   }
   if (gps.hdop.isUpdated() && gps.hdop.isValid()) {  // HDOP
-    gps_data.hdop = gps.hdop.hdop();
+    gps_data.hdop = gps.hdop.hdop();                 // Updates the HDOP
   }
   if (gps.date.isUpdated() && gps.date.isValid()) {  // Date
-    gps_data.year = gps.date.year();
-    gps_data.month = gps.date.month();
-    gps_data.day = gps.date.day();
-    update_date_time();
+    gps_data.year = gps.date.year();                 // Year
+    gps_data.month = gps.date.month();               // Month
+    gps_data.day = gps.date.day();                   // Day
+    update_date_time();                              // Function that updates the time according to the time zone
   }
   if (gps.time.isUpdated() && gps.time.isValid()) {  // Time
-    gps_data.hour = gps.time.hour();
-    gps_data.minute = gps.time.minute();
-    gps_data.second = gps.time.second();
-    update_date_time();
-    gps_time.last_update_millis = millis();  // Stores the millis() value where the last valid information was received
+    gps_data.hour = gps.time.hour();                 // Hour
+    gps_data.minute = gps.time.minute();             // Minute
+    gps_data.second = gps.time.second();             // Second
+    update_date_time();                              // Function that updates the time according to the time zone
+    gps_time.last_update_millis = millis();          // Stores the millis() value where the last valid information was received
+    draw_screen = true;                              // indicates that the screen needs to be redrawn because there are GPS updates
   }
   // Defines the HDOP quality based on the HDOP value
   if (gps_data.hdop < 0.7) {
@@ -366,29 +419,30 @@ void update_gps_data() {                // Function responsible for verifying an
   }
 }
 
-void update_gps_trip() {  // Updates trip statistics using the current valid GPS/GNSS position
-  if (gps_data.latitude != 0.0 && gps_data.longitude != 0.0) {
-    if (gps_trip.trip_start_millis == 0) {
-      gps_trip.trip_start_millis = millis();  // Stores the trip start time
+void update_gps_trip() {                                        // Updates trip statistics using the current valid GPS/GNSS position
+  if (gps_data.latitude != 0.0 && gps_data.longitude != 0.0) {  // If there is latitude and longitude
+    if (gps_trip.trip_start_millis == 0) {                      // If the start of the trip has not been defined
+      gps_trip.trip_start_millis = millis();                    // Stores the trip start time
     }
-    if (gps_trip.start_latitude == 0.0 && gps_trip.start_longitude == 0.0) {
-      gps_trip.start_latitude = gps_data.latitude;
-      gps_trip.start_longitude = gps_data.longitude;
+    if (gps_trip.start_latitude == 0.0 && gps_trip.start_longitude == 0.0) {  // If there is no starting point for the trip
+      gps_trip.start_latitude = gps_data.latitude;                            // Stores the initial latitude
+      gps_trip.start_longitude = gps_data.longitude;                          // Stores the initial longitude
     } else {
-      gps_trip.distance_from_start = TinyGPSPlus::distanceBetween(gps_trip.start_latitude, gps_trip.start_longitude, gps_data.latitude, gps_data.longitude);  // Measures the distance between two points
+      // Measures the distance between the trip's starting point and the current location
+      gps_trip.distance_from_start = TinyGPSPlus::distanceBetween(gps_trip.start_latitude, gps_trip.start_longitude, gps_data.latitude, gps_data.longitude);
     }
   }
-  if (gps_data.altitude > gps_trip.max_altitude) {
-    gps_trip.max_altitude = gps_data.altitude;
+  if (gps_data.altitude > gps_trip.max_altitude) {  // If the current altitude is greater than the maximum recorded altitude
+    gps_trip.max_altitude = gps_data.altitude;      // A new maximum altitude is recorded
   }
-  if (gps_data.altitude < gps_trip.min_altitude || gps_trip.min_altitude == 0.0) {
-    gps_trip.min_altitude = gps_data.altitude;
+  if (gps_data.altitude < gps_trip.min_altitude || gps_trip.min_altitude == 0.0) {  // If the current altitude is lower than the minimum recorded altitude, or if the altitude is 0.
+    gps_trip.min_altitude = gps_data.altitude;                                      // Records a new minimum altitude
   }
-  if (gps_data.speed > gps_trip.max_speed) {
-    gps_trip.max_speed = gps_data.speed;
+  if (gps_data.speed > gps_trip.max_speed) {  // If the current speed is greater than the maximum recorded speed
+    gps_trip.max_speed = gps_data.speed;      // Now, the maximum speed is the current speed
   }
-  if (gps_data.speed < gps_trip.min_speed || gps_trip.min_speed == 0.0) {
-    gps_trip.min_speed = gps_data.speed;
+  if (gps_data.speed < gps_trip.min_speed || gps_trip.min_speed == 0.0) {  // If the current speed is less than the minimum recorded speed, or if the speed is 0
+    gps_trip.min_speed = gps_data.speed;                                   // the minimum speed is equal to the current speed
   }
 }
 
@@ -396,20 +450,20 @@ void update_gps_route() {  // Accumulates route distance and moving time using c
   if (gps_data.latitude == 0.0 && gps_data.longitude == 0.0) {
     return;
   }
-  if (gps_data.speed <= settings.min_moving_speed) {  // Ignore position changes while stopped to prevent GPS position drift from increasing the route distance
+  if (gps_data.speed < settings.min_moving_speed) {  // Ignore position changes while speed is low, to prevent GPS position fluctuation from increasing the route distance
     gps_trip.route_last_latitude = 0.0;
     gps_trip.route_last_longitude = 0.0;
     gps_trip.last_moving_millis = 0;
     return;
   }
-  unsigned long current_millis = millis();
-  if (gps_trip.route_last_latitude == 0.0 &&
-      gps_trip.route_last_longitude == 0.0) {
+  unsigned long current_millis = millis();  // Stores the current value of millis()
+  if (gps_trip.route_last_latitude == 0.0 && gps_trip.route_last_longitude == 0.0) {
     gps_trip.route_last_latitude = gps_data.latitude;
     gps_trip.route_last_longitude = gps_data.longitude;
     gps_trip.last_moving_millis = current_millis;
     return;
   }
+  // Calculates the segment distance, which is the difference between the location at the time of the last update and the current location
   double segment_distance = TinyGPSPlus::distanceBetween(gps_trip.route_last_latitude, gps_trip.route_last_longitude, gps_data.latitude, gps_data.longitude);
   gps_trip.route_distance += segment_distance;  // Adds the distance between the previous and current moving positions to the total route distance
   if (gps_trip.last_moving_millis != 0) {
@@ -422,6 +476,16 @@ void update_gps_route() {  // Accumulates route distance and moving time using c
     gps_trip.average_moving_speed = (gps_trip.route_distance / 1000.0) / (gps_trip.moving_time_millis / 3600000.0);  // Calculates average moving speed in km/h using route distance and moving time
   } else {
     gps_trip.average_moving_speed = 0;
+  }
+}
+
+void update_time_in_motion() {                                                                 // Updates the total time spent in motion, excluding periods when the device is stopped
+  unsigned long current_millis = millis();                                                     // Gets the current system time in milliseconds since the device started
+  unsigned long elapsed_millis = current_millis - gps_trip.last_time_in_motion_update_millis;  // Calculates the time elapsed since the last time-in-motion counter update
+  gps_trip.last_time_in_motion_update_millis = current_millis;                                 // Stores the current timestamp to calculate the elapsed time during the next update
+  bool speed_data_is_fresh = current_millis - gps_trip.last_speed_update_millis < 2000;        // Checks whether the last speed update was received less than 2 seconds ago. This prevents outdated speed data from keeping the motion counter running
+  if (speed_data_is_fresh && gps_trip.is_moving) {                                             // Accumulates the elapsed time only if the speed data is recent and the device is moving. The current speed must be equal to or greater than the minimum speed
+    gps_trip.time_in_motion_millis += elapsed_millis;                                          // Adds the elapsed milliseconds to the total time spent in motion
   }
 }
 
@@ -467,43 +531,48 @@ void update_display() {  // Function responsible for selecting which screen will
   }
   if (draw_screen) {
     // Check if the timeout warning screen should not be displayed and if the timeout is longer than acceptable
-    if (system_state.display_timeout_warning == false && millis() - gps_time.last_update_millis >= (settings.gps_timeout_seconds * 1000)) {
+    if (settings.gps_timeout_seconds != 0 && system_state.display_timeout_warning == false && millis() - gps_time.last_update_millis >= (settings.gps_timeout_seconds * 1000)) {
+      // Draw a warning symbol
       M5.Display.fillTriangle(M5.Display.width() - 5, M5.Display.height() - 5, M5.Display.width() - 26, M5.Display.height() - 5, M5.Display.width() - 15, M5.Display.height() - 26, YELLOW);
       M5.Display.setTextDatum(middle_center);
       M5.Display.setTextSize(2);
-      M5.Display.setTextColor(BLACK);
+      M5.Display.setTextColor(settings.background_color);
       M5.Display.drawString("!", M5.Display.width() - 14, M5.Display.height() - 12);
       // Shows a warning icon when GNSS communication has timed out but the warning screen is not active
     }
+  }
+  if (draw_screen || toggle_screen) {                   // Checks if the screen has been updated
+    system_state.last_screen_update_millis = millis();  // Update system_state.last_screen_update_millis with the current millis() value
   }
   draw_screen = false;    // draw_screen is set to false, as the screen has already been drawn
   toggle_screen = false;  // toggle_screen is set to false because the screen has already been toggled
 }
 
 void screen_general() {
-  if (M5.BtnA.wasPressed()) {
-    screen_general_i = screen_general_i + 1;
-    if (screen_general_i > 3) {
-      screen_general_i = 0;
+  if (M5.BtnA.wasPressed()) {                 // If button A is pressed
+    screen_general_i = screen_general_i + 1;  // The General screen index increases
+    if (screen_general_i > 3) {               // If the index of the General screen is greater than 3 (3 is the limit)
+      screen_general_i = 0;                   // The index returns to 0 (goes back to the beginning)
     }
     draw_screen = true;    // Set draw_screen to true to indicate that the screen needs to be redrawn
     toggle_screen = true;  // Set toggle_screen to true to indicate that the screen has been toggled
   }
 
-  if (draw_screen) {
-    if (screen_general_i == 0) {
-      M5.Display.setRotation(3);  // Set display rotation to landscape orientation (3), with the blue button facing left
-    } else {
-      M5.Display.setRotation(0);  // Set display rotation to portrait orientation (0), with the blue button facing down
+  if (draw_screen) {              // Whether the screen should be drawn
+    if (screen_general_i == 0) {  // If the General screen index is equal to 0
+      // Only index 0 of the General screen has a horizontal orientation
+      M5.Display.setRotation(horizontal_screen_rotation);  // Set the screen rotation to landscape orientation, with button A (blue button) facing either left or right
+    } else {                                               // If the General screen index is different from 0
+      M5.Display.setRotation(vertical_screen_rotation);    // Set the screen rotation to portrait orientation, with button A (the blue button) facing either down or up
     }
   }
 
   switch (screen_general_i) {
-    case 0:
-      screen_general_1();
+    case 0:                // If the General screen index is equal to 0
+      screen_general_1();  // it goes to subscreen 1 (the first General subscreen)
       break;
-    case 1:
-      screen_general_2();
+    case 1:                // If the General screen index is equal to 1
+      screen_general_2();  // it goes to subscreen 2 (the second General subscreen)
       break;
     case 2:
       screen_general_3();
@@ -511,13 +580,14 @@ void screen_general() {
     case 3:
       screen_general_4();
       break;
-    default:
-      screen_general_1();
-      screen_general_i = 0;
+    default:                 // If the General screen index is not among the Switch options
+      screen_general_1();    // Go to the General 1 subscreen
+      screen_general_i = 0;  // Sets the index for the General screen to 0 (returns to the beginning)
       break;
   }
 
-  if (screen_general_i != 0) {
+  if (screen_general_i != 0) {  // If the General screen index is different from 0
+    // It will set the Text Datum, font, and text color to the default
     M5.Display.setTextDatum(top_left);
     M5.Display.setFont(&fonts::Font0);
     M5.Display.setTextColor(settings.theme_color);
@@ -526,7 +596,7 @@ void screen_general() {
 
 void screen_general_1() {
   if (draw_screen) {
-    screen_header("General");
+    screen_header("General");  // Calls the header function, which will draw the header with the screen name and the battery percentage
     M5.Display.setCursor(10, 35);
     M5.Display.setTextSize(1);
     M5.Display.print("SAT: ");
@@ -540,7 +610,7 @@ void screen_general_1() {
     M5.Display.setCursor(10, 65);
     M5.Display.setTextSize(1);
     M5.Display.print("SPEED: ");
-    int cursor_x_speed_unit = M5.Display.textWidth("SPEED: ");
+    int cursor_x_speed_unit = M5.Display.textWidth("SPEED: ");  // Measure the width of the text
     M5.Display.setTextSize(2);
     M5.Display.print(convert_speed(gps_data.speed, false));
     cursor_x_speed_unit = cursor_x_speed_unit + M5.Display.textWidth(convert_speed(gps_data.speed, false));
@@ -942,13 +1012,13 @@ void screen_general_3() {
 void screen_general_4() {
   if (draw_screen) {
     screen_header_vertical("General", false);
-    M5.Display.fillRoundRect(10, 25, M5.Display.width() - 20, 62, 10, BLACK);
+    M5.Display.fillRoundRect(10, 25, M5.Display.width() - 20, 62, 10, settings.background_color);
     M5.Display.setTextSize(1);
     M5.Display.drawString("Speed - " + settings.units_speed_measurement, M5.Display.width() / 2, 32);
     M5.Display.setFont(&fonts::FreeSans18pt7b);
     M5.Display.drawString(convert_speed(gps_data.speed, false), M5.Display.width() / 2, 50);
     M5.Display.setFont(&fonts::Font0);
-    M5.Display.fillRoundRect(10, 97, M5.Display.width() - 20, 62, 10, BLACK);
+    M5.Display.fillRoundRect(10, 97, M5.Display.width() - 20, 62, 10, settings.background_color);
     if (settings.unit_altitude_measurement == "Meters") {
       M5.Display.drawString("Altitude - Meters", M5.Display.width() / 2, 106);
       M5.Display.setFont(&fonts::FreeSans18pt7b);
@@ -978,7 +1048,7 @@ void screen_general_4() {
     } else {
       direction = "Northwest";
     }
-    M5.Display.fillRoundRect(10, 168, M5.Display.width() - 20, 62, 10, BLACK);
+    M5.Display.fillRoundRect(10, 168, M5.Display.width() - 20, 62, 10, settings.background_color);
     M5.Display.drawString("Course: " + direction, M5.Display.width() / 2, 175);
     M5.Display.setFont(&fonts::FreeSans18pt7b);
     M5.Display.drawString(String((int)gps_data.course), M5.Display.width() / 2, 192);
@@ -1224,9 +1294,9 @@ void screen_route_stats() {  // Displays the accumulated route distance and aver
 
   if (draw_screen) {
     if (screen_route_i == 0) {
-      M5.Display.setRotation(3);  // Set display rotation to landscape orientation (3), with the blue button facing left
+      M5.Display.setRotation(horizontal_screen_rotation);  // Set the screen rotation to landscape orientation, with button A (blue button) facing either left or right
     } else {
-      M5.Display.setRotation(0);  // Set display rotation to portrait orientation (0), with the blue button facing down
+      M5.Display.setRotation(vertical_screen_rotation);  // Set the screen rotation to portrait orientation, with button A (the blue button) facing either down or up
     }
   }
 
@@ -1440,17 +1510,12 @@ void screen_route_stats_3() {
     M5.Display.drawLine(0, 165, M5.Display.width(), 165, settings.theme_color);
     M5.Display.setTextSize(1);
     M5.Display.setFont(&fonts::Font0);
-    M5.Display.drawString("TRIP TIME", M5.Display.width() / 2, 175);
-    unsigned long elapsed_millis = millis() - gps_trip.trip_start_millis;
-    unsigned long elapsed_seconds = elapsed_millis / 1000;
-    unsigned long elapsed_hours = elapsed_seconds / 3600;
-    unsigned long elapsed_minutes = (elapsed_seconds % 3600) / 60;
-    unsigned long elapsed_secs = elapsed_seconds % 60;
-    String elapsed_time = (elapsed_hours < 10 ? "0" : "") + String(elapsed_hours) + ":" + (elapsed_minutes < 10 ? "0" : "") + String(elapsed_minutes) + ":" + (elapsed_secs < 10 ? "0" : "") + String(elapsed_secs);
-    M5.Display.setTextSize(0.5f);
-    if (elapsed_hours < 1) {
-      elapsed_time = (elapsed_minutes < 10 ? "0" : "") + String(elapsed_minutes) + ":" + (elapsed_secs < 10 ? "0" : "") + String(elapsed_secs);
+    M5.Display.drawString("TIME IN MOTION", M5.Display.width() / 2, 175);
+    String elapsed_time = format_millis_in_motion_clock(gps_trip.time_in_motion_millis, false, false);
+    if (elapsed_time.length() < 6) {
       M5.Display.setTextSize(0.8f);
+    } else {
+      M5.Display.setTextSize(0.5f);
     }
     M5.Display.setFont(&fonts::Font7);
     M5.Display.drawString(elapsed_time, M5.Display.width() / 2, 190);
@@ -1459,17 +1524,17 @@ void screen_route_stats_3() {
 
 void screen_course() {
   if (toggle_screen) {
-    M5.Display.fillScreen(BLACK);
+    M5.Display.fillScreen(settings.background_color);
     M5.Display.fillRect(0, 0, 173, 25, settings.theme_color);
     M5.Display.fillRect(0, 110, 173, 25, settings.theme_color);
     M5.Display.setTextSize(2);
-    M5.Display.setTextColor(BLACK);
+    M5.Display.setTextColor(settings.background_color);
     M5.Display.setTextDatum(top_left);
     M5.Display.drawString("Course", 10, 5);
-    M5.Display.fillCircle(172, 67, 73, BLACK);
+    M5.Display.fillCircle(172, 67, 73, settings.background_color);
     M5.Display.fillCircle(172, 67, 67, settings.theme_color);
     M5.Display.setTextSize(2);
-    M5.Display.setTextColor(BLACK);
+    M5.Display.setTextColor(settings.background_color);
     M5.Display.setTextDatum(middle_center);
     M5.Display.drawString("N", 172, 14);
     M5.Display.drawString("NE", 208, 33);
@@ -1492,7 +1557,7 @@ void screen_course() {
       if (data_comparison.line_course_x != 0 && data_comparison.line_course_y != 0) {
         M5.Display.drawWideLine(centerX, centerY, data_comparison.line_course_x, data_comparison.line_course_y, 5, settings.theme_color);
       }
-      M5.Display.drawWideLine(centerX, centerY, endX, endY, 3, BLACK);  // Draws a wide black line from the center to the pointer endpoint
+      M5.Display.drawWideLine(centerX, centerY, endX, endY, 3, settings.background_color);  // Draw a thick line from the center to the tip of the pointer, using the background color
       data_comparison.line_course_x = endX;
       data_comparison.line_course_y = endY;
 
@@ -1523,9 +1588,9 @@ void screen_course() {
         direction = "Northwest";
         direction_symbol = "NW";
       }
-      M5.Display.fillCircle(172, 67, 7, BLACK);
+      M5.Display.fillCircle(172, 67, 7, settings.background_color);
       M5.Display.fillCircle(172, 67, 2, settings.theme_color);
-      M5.Display.fillRect(0, 25, 103, 85, BLACK);
+      M5.Display.fillRect(0, 25, 103, 85, settings.background_color);
       M5.Display.setTextDatum(top_left);
       M5.Display.setTextSize(3);
       M5.Display.setTextColor(settings.theme_color);
@@ -1542,7 +1607,7 @@ void screen_course() {
       last_speed_course = gps_data.speed;
       M5.Display.fillRect(0, 110, 103, 25, settings.theme_color);
       M5.Display.setTextSize(2);
-      M5.Display.setTextColor(BLACK);
+      M5.Display.setTextColor(settings.background_color);
       M5.Display.setTextDatum(bottom_left);
       if (M5.Power.isCharging()) {
         M5.Display.drawString("+" + String(M5.Power.getBatteryLevel()) + "%", 10, M5.Display.height() - 3);
@@ -1602,58 +1667,93 @@ void screen_session_info() {
   if (millis() - gps_trip.last_millis_shown_info > 1000 && millis() - gps_time.last_update_millis >= (settings.gps_timeout_seconds * 1000)) {
     gps_trip.last_millis_shown_info = millis();
     draw_screen = true;
-  }
+  }  // 18.5
   if (draw_screen || toggle_screen) {
     screen_header("Session Info");
     M5.Display.setTextSize(1);
-    M5.Display.setCursor(10, 35);
-    M5.Display.print("Trip Time");
+    M5.Display.setTextDatum(middle_left);
+    M5.Display.drawString("Time in Motion: ", 10, 43);
     M5.Display.setTextSize(2);
-    M5.Display.setCursor(10, 50);
+    M5.Display.setTextDatum(middle_right);
+    M5.Display.drawString(format_millis_in_motion_clock(gps_trip.time_in_motion_millis, false, true), M5.Display.width() - 10, 43);
+
+    M5.Display.drawLine(0, 62, M5.Display.width(), 62, settings.theme_color);
+
+    M5.Display.setTextSize(1);
+    M5.Display.setTextDatum(middle_left);
+    M5.Display.drawString("Trip Time: ", 10, 81);
+    M5.Display.setTextSize(2);
+    M5.Display.setTextDatum(middle_right);
     if (gps_trip.trip_start_millis == 0) {
-      M5.Display.print("No Fix");
+      M5.Display.drawString("No Fix", M5.Display.width() - 10, 81);
     } else {
-      M5.Display.print(get_elapsed_time(gps_trip.trip_start_millis));
+      M5.Display.drawString(format_millis_in_motion_clock(gps_trip.trip_start_millis, true, true), M5.Display.width() - 10, 81);
     }
+
+    M5.Display.drawLine(0, 100, M5.Display.width(), 100, settings.theme_color);
+
     M5.Display.setTextSize(1);
-    M5.Display.setCursor(10, 75);
-    M5.Display.print("First Fix");
+    M5.Display.setTextDatum(middle_left);
+    M5.Display.drawString("Fix Time: ", 10, 119);
     M5.Display.setTextSize(2);
-    M5.Display.setCursor(10, 90);
+    M5.Display.setTextDatum(middle_right);
     if (gps_time.first_fix_millis == 0) {
-      M5.Display.print("No Fix");
+      M5.Display.drawString("No Fix", M5.Display.width() - 10, 119);
     } else {
-      M5.Display.print(get_elapsed_time(gps_time.first_fix_millis));
-      M5.Display.print(" ago");
+      M5.Display.drawString(format_millis_in_motion_clock(gps_time.first_fix_millis, true, true), M5.Display.width() - 10, 119);
     }
-    M5.Display.setCursor(10, 120);
-    M5.Display.setTextSize(1);
-    M5.Display.print("Fix Time: ");
-    M5.Display.print(millis_to_time(gps_time.first_fix_millis));
   }
 }
 
 void screen_about() {
-  if (toggle_screen) {
-    screen_header("About");
-    M5.Display.setTextSize(1);
-    M5.Display.setCursor(10, 30);
-    M5.Display.print("Developed by ViniciusHNF");
-    M5.Display.setCursor(10, 45);
-    M5.Display.print("> github.com/viniciushnf");
-    M5.Display.setCursor(10, 60);
-    M5.Display.print("> youtube.com/@ViniciusHNF");
-    M5.Display.setCursor(10, 90);
-    M5.Display.print("Selected baud rate: ");
-    M5.Display.print(settings.module_baudrate);
-    M5.Display.setCursor(10, 105);
-    M5.Display.print("GPS/GNSS PIN TX -> GPIO ");
-    M5.Display.print(GPS_RX_PIN);
-    M5.Display.print(" (GPIO RX)");
-    M5.Display.setCursor(10, 120);
-    M5.Display.print("GPS/GNSS PIN RX -> GPIO ");
-    M5.Display.print(GPS_TX_PIN);
-    M5.Display.print(" (GPIO TX)");
+  if (M5.BtnA.wasReleased()) {
+    if (screen_about_i) {
+      screen_about_i = false;
+    } else {
+      screen_about_i = true;
+    }
+    toggle_screen = true;
+  }
+  if (screen_about_i) {
+    if (toggle_screen) {
+      screen_header("About");
+      M5.Display.setTextSize(1);
+      M5.Display.setTextDatum(top_center);
+      M5.Display.drawString("Developed by", M5.Display.width() / 2, 30);
+      M5.Display.setTextSize(2);
+      M5.Display.drawString("ViniciusHNF", M5.Display.width() / 2, 45);
+      M5.Display.setTextSize(1);
+      M5.Display.drawString("For more information or questions,", M5.Display.width() / 2, 70);
+      M5.Display.drawString("visit the project page on GitHub:", M5.Display.width() / 2, 83);
+      M5.Display.fillRoundRect(10, 95, 220, 33, 10, settings.theme_color);
+      M5.Display.setTextColor(settings.background_color);
+      M5.Display.setTextDatum(top_left);
+      M5.Display.drawString("https://github.com/viniciushnf/", 25, 100);
+      M5.Display.drawString("M5StickS3-GPS-GNSS-Monitor", 25, 115);
+    }
+  } else {
+    if (toggle_screen) {
+      screen_header("About");
+      M5.Display.setTextSize(1);
+      M5.Display.setTextDatum(top_center);
+      M5.Display.drawString("GPS & GNSS Monitor - V " + String(VERSION_FIRMWARE, 1), M5.Display.width() / 2, 30);
+      M5.Display.setTextDatum(top_left);
+      M5.Display.setCursor(10, 45);
+      M5.Display.print("GPIO RX: " + String(settings.gpio_rx));
+      M5.Display.print(" - GPIO TX: " + String(settings.gpio_tx));
+      M5.Display.setCursor(10, 60);
+      M5.Display.print("Baud rate: " + String(settings.module_baudrate));
+      M5.Display.drawLine(0, 75, M5.Display.width(), 75, settings.theme_color);
+      M5.Display.setTextDatum(top_center);
+      M5.Display.setTextSize(1.4f);
+      M5.Display.drawString("Developed by ViniciusHNF", M5.Display.width() / 2, 85);
+      M5.Display.setTextDatum(top_left);
+      M5.Display.setTextSize(1);
+      M5.Display.setCursor(10, 105);
+      M5.Display.print("> github.com/viniciushnf");
+      M5.Display.setCursor(10, 120);
+      M5.Display.print("> youtube.com/@ViniciusHNF");
+    }
   }
 }
 
@@ -1666,7 +1766,7 @@ void screen_settings() {
         screen_settings_i = screen_settings_i + 1;                      // 1 is added to the value of screen_settings_i
       } else {                                                          // If the time button B was held down is greater than or equal to time_long_press_button_b
         if (screen_settings_i == 0) {                                   // Checks if screen_settings_i is equal to 0
-          screen_settings_i = 12;                                       // screen_settings_i receives the value 12, which is the index of the last screen
+          screen_settings_i = 19;                                       // screen_settings_i receives the value 19, which is the index of the last screen
         } else {                                                        // If the value of screen_settings_i is not equal to 0
           screen_settings_i = screen_settings_i - 1;                    // 1 is subtracted from the value of screen_settings_i. Goes to the previous screen
         }
@@ -1678,46 +1778,67 @@ void screen_settings() {
     }
     switch (screen_settings_i) {
       case 0:
-        screen_settings_color();
+        screen_settings_theme_color();
         break;
       case 1:
-        screen_settings_brightness();
+        screen_settings_background_color();
         break;
       case 2:
-        screen_settings_screen_timeout();
+        screen_settings_brightness();
         break;
       case 3:
-        screen_settings_coord_format();
+        screen_settings_screen_timeout();
         break;
       case 4:
-        screen_settings_unit_speed();
+        screen_settings_flip_screen_horizontally();
         break;
       case 5:
-        screen_settings_unit_altitude();
+        screen_settings_flip_screen_vertically();
         break;
       case 6:
-        screen_settings_unit_distance();
+        screen_settings_screen_rotate();
         break;
       case 7:
-        screen_settings_timezone();
+        screen_settings_coord_format();
         break;
       case 8:
-        screen_settings_time_format();
+        screen_settings_unit_speed();
         break;
       case 9:
-        screen_settings_date_format();
+        screen_settings_min_trip_speed();
         break;
       case 10:
-        screen_settings_baudrate();
+        screen_settings_unit_altitude();
         break;
       case 11:
-        screen_settings_reset_trip();
+        screen_settings_unit_distance();
         break;
       case 12:
+        screen_settings_timezone();
+        break;
+      case 13:
+        screen_settings_date_format();
+        break;
+      case 14:
+        screen_settings_time_format();
+        break;
+      case 15:
+        screen_settings_screen_update_interval();
+        break;
+      case 16:
+        screen_settings_module_timeout();
+        break;
+      case 17:
+        screen_settings_basic_settings();
+        break;
+      case 18:
+        screen_settings_reset_trip();
+        break;
+      case 19:
         screen_settings_exit();
         break;
       default:
-        screen_settings_color();
+        screen_settings_theme_color();
         screen_settings_i = 0;
         break;
     }
@@ -1739,7 +1860,7 @@ void screen_settings() {
   }
 }
 
-void screen_settings_color() {
+void screen_settings_theme_color() {
   byte selected_color_i = 0;  // Finding the already defined theme color
   for (int i_color = 0; i_color < sizeof(theme_color_options) / sizeof(theme_color_options[0]); i_color++) {
     if (theme_color_options[i_color] == settings.theme_color) {
@@ -1751,15 +1872,51 @@ void screen_settings_color() {
     if (selected_color_i > (sizeof(theme_color_options) / sizeof(theme_color_options[0])) - 1) {  // If the value of selected_color_i is equal to the number of indices in theme_color_options
       selected_color_i = 0;                                                                       // selected_color_i returns to 0
     }
+    if (settings.background_color == theme_color_options[selected_color_i]) {  // Checks whether the background color is the same as the theme color
+      selected_color_i = selected_color_i + 1;                                 // Move on to the next color. The theme color cannot be the same as the background color, otherwise the screen would end up being just a single color
+    }
+    if (selected_color_i > (sizeof(theme_color_options) / sizeof(theme_color_options[0])) - 1) {  // Check again whether the index is equal to or greater than the array
+      selected_color_i = 0;                                                                       // selected_color_i returns to 0
+    }
     settings.theme_color = theme_color_options[selected_color_i];  // The theme_color will be the selected_color_i index of the theme_color_options array
     draw_screen = true;
     toggle_screen_settings = true;  // toggle_screen_settings is set to true to force the header to update with the new color
     save_settings();
   }
   if (draw_screen || toggle_screen_settings) {
-    screen_header("Color");
+    screen_header("Theme Color");
     show_defined_configuration(theme_color_options_string[selected_color_i]);
-    settings_footer("color");
+    settings_footer("theme color");
+  }
+}
+
+void screen_settings_background_color() {
+  byte selected_color_i = 0;  // Finding the already defined background color
+  for (int i_color = 0; i_color < sizeof(theme_color_options) / sizeof(theme_color_options[0]); i_color++) {
+    if (theme_color_options[i_color] == settings.background_color) {
+      selected_color_i = i_color;
+    }
+  }
+  if (M5.BtnA.wasPressed()) {
+    selected_color_i = selected_color_i + 1;                                                      // 1 is added to the value of selected_color_i
+    if (selected_color_i > (sizeof(theme_color_options) / sizeof(theme_color_options[0])) - 1) {  // If the value of selected_color_i is equal to the number of indices in theme_color_options
+      selected_color_i = 0;                                                                       // selected_color_i returns to 0
+    }
+    if (settings.theme_color == theme_color_options[selected_color_i]) {  // Checks whether the background color is the same as the theme color
+      selected_color_i = selected_color_i + 1;                            // Move on to the next color. The theme color cannot be the same as the background color, otherwise the screen would end up being just a single color
+    }
+    if (selected_color_i > (sizeof(theme_color_options) / sizeof(theme_color_options[0])) - 1) {  // Check again whether the index is equal to or greater than the array
+      selected_color_i = 0;                                                                       // selected_color_i returns to 0
+    }
+    settings.background_color = theme_color_options[selected_color_i];  // The theme_color will be the selected_color_i index of the theme_color_options array
+    draw_screen = true;
+    toggle_screen_settings = true;  // toggle_screen_settings is set to true to force the header to update with the new color
+    save_settings();
+  }
+  if (draw_screen || toggle_screen_settings) {
+    screen_header("Background Color");
+    show_defined_configuration(theme_color_options_string[selected_color_i]);
+    settings_footer("background color");
   }
 }
 
@@ -1776,7 +1933,7 @@ void screen_settings_brightness() {
   if (draw_screen || toggle_screen_settings) {
     screen_header("Brightness");
     show_defined_configuration(String(settings.screen_brightness) + "%");
-    settings_footer("brightness");
+    settings_footer("screen brightness");
   }
 }
 
@@ -1808,17 +1965,115 @@ void screen_settings_screen_timeout() {
   }
   if (draw_screen || toggle_screen_settings) {
     screen_header("Screen Timeout");
-    show_defined_configuration(str_screen_timeout);
+    M5.Display.setTextSize(1);
+    M5.Display.setTextDatum(middle_center);
+    M5.Display.drawString("Time before the screen turns", M5.Display.width() / 2, 35);
+    M5.Display.drawString("off after no button interaction", M5.Display.width() / 2, 50);
+    M5.Display.fillRoundRect(20, 62, 200, 28, 10, settings.theme_color);
+    M5.Display.setTextSize(2);
+    M5.Display.setTextColor(settings.background_color);
+    M5.Display.drawString(str_screen_timeout, M5.Display.width() / 2, 77);
     settings_footer("screen timeout");
+  }
+}
+
+void screen_settings_flip_screen_horizontally() {
+  if (M5.BtnA.wasPressed()) {
+    if (settings.flip_screen_horizontally) {
+      settings.flip_screen_horizontally = false;
+    } else {
+      settings.flip_screen_horizontally = true;
+    }
+    save_settings();
+    apply_rotation();
+    draw_screen = true;
+    toggle_screen_settings = true;
+  }
+  if (draw_screen || toggle_screen_settings) {
+    screen_header("Screen Flip H");
+    M5.Display.setTextSize(1);
+    M5.Display.setTextDatum(middle_center);
+    M5.Display.drawString("Rotates horizontal screens", M5.Display.width() / 2, 35);
+    M5.Display.drawString("by 180 degrees when enabled", M5.Display.width() / 2, 50);
+    M5.Display.fillRoundRect(20, 62, 200, 28, 10, settings.theme_color);
+    M5.Display.setTextSize(2);
+    M5.Display.setTextColor(settings.background_color);
+    if (settings.flip_screen_horizontally) {
+      M5.Display.drawString("YES", M5.Display.width() / 2, 77);
+    } else {
+      M5.Display.drawString("NO", M5.Display.width() / 2, 77);
+    }
+    settings_footer("screen flip H");
+  }
+}
+
+void screen_settings_flip_screen_vertically() {
+  if (M5.BtnA.wasPressed()) {
+    if (settings.flip_screen_vertically) {
+      settings.flip_screen_vertically = false;
+    } else {
+      settings.flip_screen_vertically = true;
+    }
+    save_settings();
+    apply_rotation();
+    draw_screen = true;
+    toggle_screen_settings = true;
+  }
+  if (draw_screen || toggle_screen_settings) {
+    screen_header("Screen Flip V");
+    M5.Display.setTextSize(1);
+    M5.Display.setTextDatum(middle_center);
+    M5.Display.drawString("Rotates vertical screens", M5.Display.width() / 2, 35);
+    M5.Display.drawString("by 180 degrees when enabled", M5.Display.width() / 2, 50);
+    M5.Display.fillRoundRect(20, 62, 200, 28, 10, settings.theme_color);
+    M5.Display.setTextSize(2);
+    M5.Display.setTextColor(settings.background_color);
+    if (settings.flip_screen_vertically) {
+      M5.Display.drawString("YES", M5.Display.width() / 2, 77);
+    } else {
+      M5.Display.drawString("NO", M5.Display.width() / 2, 77);
+    }
+    settings_footer("screen flip V");
+  }
+}
+
+void screen_settings_screen_rotate() {
+  if (M5.BtnA.wasPressed()) {
+    if (settings.rotate_screen_90_degrees) {
+      settings.rotate_screen_90_degrees = false;
+    } else {
+      settings.rotate_screen_90_degrees = true;
+    }
+    save_settings();
+    apply_rotation();
+    M5.Display.fillScreen(settings.background_color);
+    draw_screen = true;
+    toggle_screen_settings = true;
+  }
+  if (draw_screen || toggle_screen_settings) {
+    screen_header("Screen Rotate");
+    M5.Display.setTextSize(1);
+    M5.Display.setTextDatum(middle_center);
+    M5.Display.drawString("Rotates the screen by +90", M5.Display.width() / 2, 35);
+    M5.Display.drawString("degrees when enabled", M5.Display.width() / 2, 50);
+    M5.Display.fillRoundRect(20, 62, 200, 28, 10, settings.theme_color);
+    M5.Display.setTextSize(2);
+    M5.Display.setTextColor(settings.background_color);
+    if (settings.rotate_screen_90_degrees) {
+      M5.Display.drawString("YES", M5.Display.width() / 2, 77);
+    } else {
+      M5.Display.drawString("NO", M5.Display.width() / 2, 77);
+    }
+    settings_footer("screen rotate");
   }
 }
 
 void screen_settings_coord_format() {
   toggle_coord_format();
   if (draw_screen || toggle_screen_settings) {
-    screen_header("Coord. Format");
+    screen_header("Coordinate Format");
     show_defined_configuration(settings.coord_format);
-    settings_footer("coord. format");
+    settings_footer("coordinate format");
   }
 }
 
@@ -1828,6 +2083,48 @@ void screen_settings_unit_speed() {
     screen_header("Speed Unit");
     show_defined_configuration(settings.units_speed_measurement);
     settings_footer("speed unit");
+  }
+}
+
+void screen_settings_min_trip_speed() {
+  if (M5.BtnA.wasPressed()) {
+    settings.min_moving_speed = settings.min_moving_speed + 0.5;
+    if (settings.min_moving_speed > 10) {
+      settings.min_moving_speed = 0;
+    }
+    save_settings();
+    draw_screen = true;
+  }
+  if (draw_screen || toggle_screen_settings) {
+    double converted_speed;
+    if (settings.units_speed_measurement == "km/h") {
+      converted_speed = settings.min_moving_speed;
+    } else if (settings.units_speed_measurement == "mph") {
+      converted_speed = settings.min_moving_speed * 0.621371;
+    } else if (settings.units_speed_measurement == "knots") {
+      converted_speed = settings.min_moving_speed * 0.539957;
+    } else if (settings.units_speed_measurement == "m/s") {
+      converted_speed = settings.min_moving_speed / 3.6;
+    } else {
+      converted_speed = settings.min_moving_speed;
+    }
+    String result_speed = String(converted_speed, 2) + " " + settings.units_speed_measurement;
+    result_speed.trim();
+
+    screen_header("Min. Trip Speed");
+    M5.Display.setTextSize(1);
+    M5.Display.setTextDatum(middle_center);
+    M5.Display.drawString("Minimum speed to record trip", M5.Display.width() / 2, 35);
+    M5.Display.drawString("distance and prevent GPS drift", M5.Display.width() / 2, 50);
+    M5.Display.fillRoundRect(20, 62, 200, 28, 10, settings.theme_color);
+    M5.Display.setTextSize(2);
+    M5.Display.setTextColor(settings.background_color);
+    if (settings.min_moving_speed > 0) {
+      M5.Display.drawString(result_speed, M5.Display.width() / 2, 77);
+    } else {
+      M5.Display.drawString("Disabled", M5.Display.width() / 2, 77);
+    }
+    settings_footer("min. trip speed");
   }
 }
 
@@ -1902,28 +2199,103 @@ void screen_settings_time_format() {
   }
 }
 
-void screen_settings_baudrate() {
+void screen_settings_screen_update_interval() {
   if (M5.BtnA.wasPressed()) {
-    set_baudrate();
-    // Forces the screen to redraw
+    if (settings.screen_update_interval_seconds == 0) {
+      settings.screen_update_interval_seconds = 1;
+    } else if (settings.screen_update_interval_seconds == 1) {
+      settings.screen_update_interval_seconds = 5;
+    } else if (settings.screen_update_interval_seconds == 5) {
+      settings.screen_update_interval_seconds = 15;
+    } else if (settings.screen_update_interval_seconds == 15) {
+      settings.screen_update_interval_seconds = 30;
+    } else if (settings.screen_update_interval_seconds == 30) {
+      settings.screen_update_interval_seconds = 60;
+    } else if (settings.screen_update_interval_seconds == 60) {
+      settings.screen_update_interval_seconds = 0;
+    } else {
+      settings.screen_update_interval_seconds = 0;
+    }
+    save_settings();
     draw_screen = true;
+  }
+  if (draw_screen || toggle_screen_settings) {
+    screen_header("Screen Update");
+    M5.Display.setTextSize(1);
+    M5.Display.setTextDatum(middle_center);
+    M5.Display.drawString("Sets the screen update interval", M5.Display.width() / 2, 35);
+    M5.Display.drawString("or automatic updates", M5.Display.width() / 2, 50);
+    M5.Display.fillRoundRect(20, 62, 200, 28, 10, settings.theme_color);
+    M5.Display.setTextSize(2);
+    M5.Display.setTextColor(settings.background_color);
+    if (settings.screen_update_interval_seconds == 0) {
+      M5.Display.drawString("Automatic", M5.Display.width() / 2, 77);
+    } else {
+      M5.Display.drawString(String(settings.screen_update_interval_seconds) + " seconds", M5.Display.width() / 2, 77);
+    }
+    settings_footer("update interval");
+  }
+}
+
+void screen_settings_module_timeout() {
+  if (M5.BtnA.wasPressed()) {
+    if (settings.gps_timeout_seconds == 0) {
+      settings.gps_timeout_seconds = 5;
+    } else if (settings.gps_timeout_seconds == 5) {
+      settings.gps_timeout_seconds = 15;
+    } else if (settings.gps_timeout_seconds == 15) {
+      settings.gps_timeout_seconds = 30;
+    } else if (settings.gps_timeout_seconds == 30) {
+      settings.gps_timeout_seconds = 60;
+    } else if (settings.gps_timeout_seconds == 60) {
+      settings.gps_timeout_seconds = 0;
+    } else {
+      settings.gps_timeout_seconds = 15;
+    }
+    save_settings();
+    draw_screen = true;
+  }
+  if (draw_screen || toggle_screen_settings) {
+    screen_header("Module Timeout");
+    M5.Display.setTextSize(1);
+    M5.Display.setTextDatum(middle_center);
+    M5.Display.drawString("Shows 'Communication Warning'", M5.Display.width() / 2, 35);
+    M5.Display.drawString("if no data is received in time", M5.Display.width() / 2, 50);
+    M5.Display.fillRoundRect(20, 62, 200, 28, 10, settings.theme_color);
+    M5.Display.setTextSize(2);
+    M5.Display.setTextColor(settings.background_color);
+    if (settings.gps_timeout_seconds > 0) {
+      M5.Display.drawString(String(settings.gps_timeout_seconds) + " seconds", M5.Display.width() / 2, 77);
+    } else {
+      M5.Display.drawString("Disabled", M5.Display.width() / 2, 77);
+    }
+    settings_footer("module timeout");
+  }
+}
+
+void screen_settings_basic_settings() {
+  if (M5.BtnA.wasPressed()) {
+    basic_settings();
+    draw_screen = true;  // Forces the screen to redraw
     toggle_screen = true;
   }
   if (draw_screen || toggle_screen_settings) {
-    screen_header("Baud Rate");
+    screen_header("Basic Settings");
     M5.Display.setTextDatum(top_center);
-    M5.Display.setTextSize(1);
-    M5.Display.drawString("Current baud Rate:", M5.Display.width() / 2, 35);
+    M5.Display.fillRoundRect(10, 35, 220, 60, 10, settings.theme_color);
     M5.Display.setTextSize(2);
-    M5.Display.drawString(String(settings.module_baudrate), M5.Display.width() / 2, 50);
+    M5.Display.setTextColor(settings.background_color);
+    M5.Display.drawString("RX: " + String(settings.gpio_rx) + " - TX: " + String(settings.gpio_tx), M5.Display.width() / 2, 45);
+    M5.Display.drawString("Baud Rate: " + String(settings.module_baudrate), M5.Display.width() / 2, 70);
+    M5.Display.setTextColor(settings.theme_color);
     M5.Display.setTextSize(1);
-    M5.Display.drawString("Press button A to", M5.Display.width() / 2, 95);
-    M5.Display.drawString("set a new baud rate.", M5.Display.width() / 2, 110);
+    M5.Display.drawString("Press button A to", M5.Display.width() / 2, 105);
+    M5.Display.drawString("configure the basic settings", M5.Display.width() / 2, 120);
   }
 }
 
 void screen_settings_reset_trip() {
-  if (M5.BtnA.wasPressed()) {
+  if (M5.BtnA.wasPressed()) {  // When button A is pressed, all trip data and statistics are reset
     gps_trip.distance_from_start = 0;
     gps_trip.start_latitude = 0;
     gps_trip.start_longitude = 0;
@@ -1938,6 +2310,10 @@ void screen_settings_reset_trip() {
     gps_trip.max_altitude = 0;
     gps_trip.min_altitude = 0;
     gps_trip.trip_start_millis = 0;
+    gps_trip.time_in_motion_millis = 0;
+    gps_trip.last_time_in_motion_update_millis = millis();
+    gps_trip.last_speed_update_millis = 0;
+    gps_trip.is_moving = false;
     draw_screen = true;
   }
   if (draw_screen || toggle_screen_settings) {
@@ -1946,17 +2322,22 @@ void screen_settings_reset_trip() {
       M5.Display.setTextDatum(top_center);
       M5.Display.setTextSize(2);
       M5.Display.drawString("Trip data reset!", M5.Display.width() / 2, 65);
+      M5.Display.setTextSize(1);
+      M5.Display.setCursor(10, 120);
+      M5.Display.print("Button B = next setting");
     } else {
       screen_header("Reset Trip");
       M5.Display.setTextDatum(top_center);
       M5.Display.setTextSize(2);
       M5.Display.drawString("Reset Trip?", M5.Display.width() / 2, 35);
       M5.Display.setTextSize(1);
-      M5.Display.drawString("All trip data will be reset.", M5.Display.width() / 2, 65);
-      M5.Display.drawString("New data will be recorded", M5.Display.width() / 2, 80);
-      M5.Display.drawString("from the next GPS/GNSS fix.", M5.Display.width() / 2, 95);
-      M5.Display.setTextSize(1);
-      M5.Display.drawString("Press A to confirm.", M5.Display.width() / 2, 120);
+      M5.Display.drawString("All trip data will be reset.", M5.Display.width() / 2, 60);
+      M5.Display.drawString("New data will be recorded", M5.Display.width() / 2, 75);
+      M5.Display.drawString("from the next GPS/GNSS fix.", M5.Display.width() / 2, 90);
+      M5.Display.setCursor(10, 105);
+      M5.Display.print("Button A = reset trip");
+      M5.Display.setCursor(10, 120);
+      M5.Display.print("Button B = next setting");
     }
   }
 }
@@ -1969,10 +2350,11 @@ void screen_settings_exit() {
     draw_screen = true;
     toggle_screen_settings = true;
     screen_i = 0;
+    refresh_screen_exit_settings = true;  // Forces the screen to refresh on the next loop, even without the need to press a button or receive a new update from the GPS/GNSS module
     if (screen_general_i == 0) {
-      M5.Display.setRotation(3);  // Standard rotation (screen horizontal with button A on the left)
+      M5.Display.setRotation(horizontal_screen_rotation);  // Standard rotation (screen horizontal)
     } else {
-      M5.Display.setRotation(0);  // Vertical screen (with button A at the bottom)
+      M5.Display.setRotation(vertical_screen_rotation);  // Vertical screen
     }
   }
   if (draw_screen || toggle_screen_settings) {
@@ -1994,7 +2376,7 @@ void show_defined_configuration(String defined_configuration) {
   M5.Display.fillRoundRect(20, 35, 200, 55, 10, settings.theme_color);
   M5.Display.setTextSize(3);
   M5.Display.setTextDatum(middle_center);
-  M5.Display.setTextColor(BLACK);
+  M5.Display.setTextColor(settings.background_color);
   M5.Display.drawString(defined_configuration, M5.Display.width() / 2, 65);
 }
 
@@ -2011,12 +2393,18 @@ void settings_footer(String settings_title) {
 void screen_header(String title) {  // Function responsible for drawing the header box, the screen title, and the battery percentage, and clearing the information from the rest of the screen
   // Checks if the battery percentage, charging status, or screen has changed
   if (toggle_screen || toggle_screen_settings || data_comparison.battery_percentage != M5.Power.getBatteryLevel() || data_comparison.battery_charging != M5.Power.isCharging()) {
-    M5.Display.fillRect(0, 0, 240, 25, settings.theme_color);                                             // Draw a square
+    M5.Display.fillRect(0, 0, 240, 25, settings.theme_color);  // Draw a square
+    M5.Display.setTextColor(settings.background_color);        // Set the text color to the background color
+    M5.Display.setTextDatum(top_left);                         // Setting the text datum to top and left
+    M5.Display.setFont(&fonts::Font0);                         // Ensure it is in the default font
+    if (title.length() > 12) {                                 // If the title string has more than 12 characters, the font size will be slightly smaller and positioned a bit lower
+      M5.Display.setTextSize(1.8f);                            // Setting the text size to 1.8
+      M5.Display.drawString(title, 10, 6);                     // Print the title centered at the top
+    } else {                                                   // If the title string is 12 characters or less, the font size will be normal
+      M5.Display.setTextSize(2);                               // Setting the text size to 2
+      M5.Display.drawString(title, 10, 5);                     // Print the title centered at the top
+    }
     M5.Display.setTextSize(2);                                                                            // Setting the text size to 2
-    M5.Display.setTextColor(BLACK);                                                                       // Setting the text color to black
-    M5.Display.setTextDatum(top_left);                                                                    // Setting the text datum to top and left
-    M5.Display.setFont(&fonts::Font0);                                                                    // Ensure it is in the default font
-    M5.Display.drawString(title, 10, 5);                                                                  // Print the title centered at the top
     M5.Display.setTextDatum(top_right);                                                                   // Setting the text datum to top and right
     if (M5.Power.isCharging() || data_comparison.battery_charging) {                                      // Check if it is charging
       M5.Display.drawString("+" + String(M5.Power.getBatteryLevel()) + "%", M5.Display.width() - 10, 5);  // Prints the + and the battery percentage
@@ -2026,9 +2414,9 @@ void screen_header(String title) {  // Function responsible for drawing the head
     data_comparison.battery_percentage = M5.Power.getBatteryLevel();
     data_comparison.battery_charging = M5.Power.isCharging();
   }
-  M5.Display.fillRect(0, 25, 240, 110, BLACK);    // Draw a black square
-  M5.Display.setTextColor(settings.theme_color);  // Setting the text color to settings.theme_color
-  M5.Display.setTextDatum(top_left);              // Returning the text datum to the standard
+  M5.Display.fillRect(0, 25, 240, 110, settings.background_color);  // Draw a square with the background color
+  M5.Display.setTextColor(settings.theme_color);                    // Setting the text color to settings.theme_color
+  M5.Display.setTextDatum(top_left);                                // Returning the text datum to the standard
 }
 
 void screen_header_vertical(String title, bool bg_color) {  // It does the same thing as the standard function, but with the screen in portrait mode
@@ -2036,11 +2424,11 @@ void screen_header_vertical(String title, bool bg_color) {  // It does the same 
     if (bg_color) {
       M5.Display.fillRect(0, 0, M5.Display.width(), 15, settings.theme_color);
     } else {
-      M5.Display.fillRect(0, 0, M5.Display.width(), 15, BLACK);
+      M5.Display.fillRect(0, 0, M5.Display.width(), 15, settings.background_color);
     }
     M5.Display.setTextSize(1);
     if (bg_color) {
-      M5.Display.setTextColor(BLACK);
+      M5.Display.setTextColor(settings.background_color);
     } else {
       M5.Display.setTextColor(settings.theme_color);
     }
@@ -2057,7 +2445,7 @@ void screen_header_vertical(String title, bool bg_color) {  // It does the same 
     data_comparison.battery_charging = M5.Power.isCharging();
   }
   if (bg_color) {
-    M5.Display.fillRect(0, 15, M5.Display.width(), M5.Display.height() - 15, BLACK);
+    M5.Display.fillRect(0, 15, M5.Display.width(), M5.Display.height() - 15, settings.background_color);
   } else {
     if (toggle_screen) {
       M5.Display.fillRect(0, 15, M5.Display.width(), M5.Display.height() - 15, settings.theme_color);
@@ -2067,6 +2455,53 @@ void screen_header_vertical(String title, bool bg_color) {  // It does the same 
   M5.Display.setTextDatum(top_center);
 }
 
+void basic_settings() {
+  bool show_basic_settings_message = true;
+  bool update_message_display = true;
+  while (show_basic_settings_message) {
+    M5.update();
+    if (update_message_display) {
+      M5.Display.fillScreen(settings.background_color);
+      M5.Display.setTextSize(2);
+      M5.Display.setTextColor(settings.theme_color);
+      M5.Display.setTextDatum(top_center);
+      M5.Display.drawString("Basic Settings", M5.Display.width() / 2, 10);
+      M5.Display.setTextSize(1);
+      M5.Display.drawString("Set GPIO RX, GPIO TX, and baud rate", M5.Display.width() / 2, 40);
+      M5.Display.drawString("to match your GNSS module.", M5.Display.width() / 2, 55);
+      M5.Display.setTextDatum(top_left);
+      M5.Display.drawString("> Button B: Change value", 10, 75);
+      M5.Display.drawString("> Button A: Confirm and continue", 10, 90);
+      M5.Display.setTextDatum(top_center);
+      M5.Display.drawString("Press Button A to continue", M5.Display.width() / 2, 115);
+    }
+    update_message_display = false;
+    if (M5.BtnA.wasPressed()) {
+      show_basic_settings_message = false;
+    }
+  }
+  set_gpio_rx();
+  set_gpio_tx();
+  set_baudrate();
+  save_settings();
+  if (gps_serial_initialized) {  // Checks if a serial communication has already been initiated.
+    gps_serial.end();            // Closes the current UART configuration before applying the new baud rate
+  }
+  gps_serial.begin(settings.module_baudrate, SERIAL_8N1, settings.gpio_rx, settings.gpio_tx);  // Starts a new serial communication with the specified baud rate
+  gps_serial_initialized = true;                                                               // Sets gps_serial_initialized to true. If another serial communication needs to be initiated, the variable indicates that the previous one must be terminated
+  M5.Display.fillScreen(settings.background_color);
+  M5.Display.setTextSize(2);
+  M5.Display.setTextColor(settings.theme_color);
+  M5.Display.setTextDatum(top_center);
+  M5.Display.drawString("Basic Settings", M5.Display.width() / 2, 10);
+  M5.Display.drawString("completed", M5.Display.width() / 2, 30);
+  M5.Display.setTextDatum(top_left);
+  M5.Display.drawString("GPIO RX: " + String(settings.gpio_rx), 15, 60);
+  M5.Display.drawString("GPIO TX: " + String(settings.gpio_tx), 15, 85);
+  M5.Display.drawString("Baud Rate: " + String(settings.module_baudrate), 15, 110);
+  delay(3000);  // Waiting time of 3000 milliseconds
+}
+
 void set_baudrate() {
   bool undefined_baudrate = true;                                                                                                           // Control variable for the repetition loop
   bool update_baudrate_display = true;                                                                                                      // Control variable for when the screen needs to be updated
@@ -2074,58 +2509,297 @@ void set_baudrate() {
   if (selected_baudrate_i < 0) {
     selected_baudrate_i = 0;
   }
-  M5.Display.fillScreen(BLACK);                                        // Fill the screen with the color black
+  M5.Display.fillScreen(settings.background_color);                    // Fill the screen with the background color
   M5.Display.setTextSize(2);                                           // Setting the text size to 2
   M5.Display.setTextColor(settings.theme_color);                       // Setting the text color to settings.theme_color
   M5.Display.setTextDatum(top_center);                                 // Setting the text datum to top and center
   M5.Display.drawString("Set Baud Rate", M5.Display.width() / 2, 10);  // "Set baud rate" is printed centered at the top
   M5.Display.setTextDatum(top_left);                                   // Setting the text datum to top and left
-  while (undefined_baudrate) {                                         // It stays in this loop as long as undefined_baudrate is true
-    M5.update();                                                       // Updates the state of the M5StickS3 hardware, especially buttons and input events
-    if (M5.BtnB.wasPressed()) {                                        // Checks if button B has been pressed
-      selected_baudrate_i = selected_baudrate_i + 1;                   // 1 is added to the value of selected_baudrate_i
-      update_baudrate_display = true;                                  // update_baudrate_display is set to true to update the display
+  int start_x = 10;
+  int cursor_x = 10;
+  int cursor_y = 50;
+  int margin_x = 110;
+  int margin_y = 25;
+  while (undefined_baudrate) {                        // It stays in this loop as long as undefined_baudrate is true
+    M5.update();                                      // Updates the state of the M5StickS3 hardware, especially buttons and input events
+    if (M5.BtnB.wasPressed()) {                       // Checks if button B has been pressed
+      selected_baudrate_i = selected_baudrate_i + 1;  // 1 is added to the value of selected_baudrate_i
+      update_baudrate_display = true;                 // update_baudrate_display is set to true to update the display
     }
     if (selected_baudrate_i > (sizeof(baudrate_options) / sizeof(baudrate_options[0])) - 1) {  // If the value of selected_baudrate_i is equal to the number of indices in baudrate_options
       selected_baudrate_i = 0;                                                                 // selected_baudrate_i returns to 0
     }
     if (update_baudrate_display) {
-      M5.Display.fillRect(0, 40, 240, 95, BLACK);                                                                    // Draw a square on the screen
-      M5.Display.setCursor(0, 45);                                                                                   // Moves the cursor to the specified X (0) and Y (45) coordinates
+      M5.Display.fillRect(0, 50, M5.Display.width(), M5.Display.height() - 50, settings.background_color);  // Draw a square on the screen
+      M5.Display.drawLine(10, 50, 230, 50, settings.theme_color);
+      M5.Display.drawLine(10, 75, 230, 75, settings.theme_color);
+      M5.Display.drawLine(10, 100, 230, 100, settings.theme_color);
+      M5.Display.drawLine(65, 125, 175, 125, settings.theme_color);
+      M5.Display.drawLine(10, 50, 10, 100, settings.theme_color);
+      M5.Display.drawLine(120, 50, 120, 100, settings.theme_color);
+      M5.Display.drawLine(230, 50, 230, 100, settings.theme_color);
+      M5.Display.drawLine(65, 100, 65, 125, settings.theme_color);
+      M5.Display.drawLine(175, 100, 175, 125, settings.theme_color);
+      cursor_x = 10;
+      cursor_y = 50;
+      M5.Display.setTextSize(2);
+      M5.Display.setTextDatum(middle_center);
       for (int i_baudrate = 0; i_baudrate < sizeof(baudrate_options) / sizeof(baudrate_options[0]); i_baudrate++) {  // traverses the baudrate_options array
-        if (selected_baudrate_i == i_baudrate) {                                                                     // If selected_baudrate_i is equal to i_baudrate
-          M5.Display.print(" > ");                                                                                   // print >
-          M5.Display.println(baudrate_options[i_baudrate]);                                                          // prints the baudrate of the matched index
-        } else {                                                                                                     // If selected_baudrate_i is not equal to i_baudrate
-          M5.Display.print("   ");                                                                                   // prints a space
-          M5.Display.println(baudrate_options[i_baudrate]);                                                          // prints the baudrate of the matched index
+        if (cursor_x > 180) {
+          cursor_x = start_x;
+          cursor_y = cursor_y + margin_y;
         }
+        if (cursor_y > 90) {
+          cursor_x = start_x + (margin_x / 2);
+        }
+        if (selected_baudrate_i == i_baudrate) {  // If selected_baudrate_i is equal to i_baudrate
+          M5.Display.fillRect(cursor_x, cursor_y, margin_x, margin_y, settings.theme_color);
+          M5.Display.setTextColor(settings.background_color);
+          M5.Display.drawString(String(baudrate_options[i_baudrate]), cursor_x + (margin_x / 2) + 2, cursor_y + (margin_y / 2) + 2);
+          M5.Display.setTextColor(settings.theme_color);
+        } else {  // If selected_baudrate_i is not equal to i_baudrate
+          M5.Display.drawString(String(baudrate_options[i_baudrate]), cursor_x + (margin_x / 2) + 2, cursor_y + (margin_y / 2) + 2);
+        }
+        cursor_x = cursor_x + margin_x;
       }
       update_baudrate_display = false;  // update_baudrate_display is set to false to avoid unnecessary display updates
     }
     if (M5.BtnA.wasPressed()) {                                          // Checks if button A has been pressed
       settings.module_baudrate = baudrate_options[selected_baudrate_i];  // The module_baudrate will be the selected_baudrate_i index of the baudrate_options array
       undefined_baudrate = false;                                        // undefined_baudrate is set to false to exit the loop
-      save_settings();
-      if (gps_serial_initialized) {  // Checks if a serial communication has already been initiated.
-        gps_serial.end();            // Closes the current UART configuration before applying the new baud rate
+      cursor_x = 10;
+      cursor_y = 50;
+      for (int i_baudrate = 0; i_baudrate < sizeof(baudrate_options) / sizeof(baudrate_options[0]); i_baudrate++) {  // traverses the baudrate_options array
+        if (cursor_x > 180) {
+          cursor_x = start_x;
+          cursor_y = cursor_y + margin_y;
+        }
+        if (cursor_y > 90) {
+          cursor_x = start_x + (margin_x / 2);
+        }
+        if (selected_baudrate_i == i_baudrate) {  // If selected_baudrate_i is equal to i_baudrate
+          M5.Display.fillRect(cursor_x, cursor_y, margin_x, margin_y, settings.theme_color);
+          M5.Display.setTextColor(settings.background_color);
+          M5.Display.drawString(String(baudrate_options[i_baudrate]), cursor_x + (margin_x / 2) + 2, cursor_y + (margin_y / 2) + 2);
+          M5.Display.setTextColor(settings.theme_color);
+        } else {  // If selected_baudrate_i is not equal to i_baudrate
+          M5.Display.fillRect(cursor_x + 1, cursor_y + 1, margin_x - 2, margin_y - 2, settings.background_color);
+        }
+        cursor_x = cursor_x + margin_x;
       }
-      gps_serial.begin(
-          settings.module_baudrate,
-          SERIAL_8N1,
-          GPS_RX_PIN,
-          GPS_TX_PIN);                // Starts a new serial communication with the specified baud rate
-      gps_serial_initialized = true;  // Sets gps_serial_initialized to true. If another serial communication needs to be initiated, the variable indicates that the previous one must be terminated
-      M5.Display.fillScreen(BLACK);   // Fill the screen with the color black
-      M5.Display.setCursor(0, 35);    // Moves the cursor to the specified X (0) and Y (35) coordinates
-      M5.Display.println("  Baud Rate set to: ");
-      M5.Display.println("");                        // Skip to the next line
-      M5.Display.print("  ");                        // prints a space
-      M5.Display.setTextSize(3);                     // Setting the text size to 3
-      M5.Display.println(settings.module_baudrate);  // Prints the selected baud rate value
-      delay(1500);                                   // Waiting time of 1500 milliseconds
+      delay(1000);
     }
   }
+}
+
+void set_gpio_rx() {
+  bool undefined_gpio_rx = true;
+  bool update_gpio_rx_display = true;
+  int selected_gpio_rx_i = findIndex(gpio_options, sizeof(gpio_options) / sizeof(gpio_options[0]), settings.gpio_rx);
+  if (selected_gpio_rx_i < 0) {
+    selected_gpio_rx_i = 0;
+  }
+  M5.Display.fillScreen(settings.background_color);
+  M5.Display.setTextSize(2);
+  M5.Display.setTextColor(settings.theme_color);
+  M5.Display.setTextDatum(top_center);
+  M5.Display.drawString("Set GPIO RX", M5.Display.width() / 2, 10);
+  M5.Display.setTextSize(1);
+  M5.Display.drawString("GPS/GNSS module TX -> GPIO RX", M5.Display.width() / 2, 35);
+  int start_x = 10;
+  int cursor_x = 10;
+  int cursor_y = 50;
+  int margin_x = 55;
+  int margin_y = 25;
+  while (undefined_gpio_rx) {
+    M5.update();
+    if (M5.BtnB.wasPressed()) {
+      selected_gpio_rx_i = selected_gpio_rx_i + 1;
+      update_gpio_rx_display = true;
+    }
+    if (selected_gpio_rx_i > (sizeof(gpio_options) / sizeof(gpio_options[0])) - 1) {
+      selected_gpio_rx_i = 0;
+    }
+    if (update_gpio_rx_display) {
+      M5.Display.fillRect(0, 50, M5.Display.width(), M5.Display.height() - 50, settings.background_color);
+      M5.Display.drawLine(10, 50, M5.Display.width() - 10, 50, settings.theme_color);
+      M5.Display.drawLine(10, 75, M5.Display.width() - 10, 75, settings.theme_color);
+      M5.Display.drawLine(10, 100, M5.Display.width() - 10, 100, settings.theme_color);
+      M5.Display.drawLine(10, 125, M5.Display.width() - 10, 125, settings.theme_color);
+      M5.Display.drawLine(10, 50, 10, 125, settings.theme_color);
+      M5.Display.drawLine(65, 50, 65, 125, settings.theme_color);
+      M5.Display.drawLine(120, 50, 120, 125, settings.theme_color);
+      M5.Display.drawLine(175, 50, 175, 125, settings.theme_color);
+      M5.Display.drawLine(230, 50, 230, 125, settings.theme_color);
+      cursor_x = 10;
+      cursor_y = 50;
+      M5.Display.setTextSize(2);
+      M5.Display.setTextDatum(middle_center);
+      for (int i_gpio_rx = 0; i_gpio_rx < sizeof(gpio_options) / sizeof(gpio_options[0]); i_gpio_rx++) {
+        if (cursor_x > 180) {
+          cursor_x = start_x;
+          cursor_y = cursor_y + margin_y;
+        }
+        if (selected_gpio_rx_i == i_gpio_rx) {
+          M5.Display.fillRect(cursor_x, cursor_y, margin_x, margin_y, settings.theme_color);
+          M5.Display.setTextColor(settings.background_color);
+          M5.Display.drawString("G " + String(gpio_options[i_gpio_rx]), cursor_x + (margin_x / 2) + 2, cursor_y + (margin_y / 2) + 2);
+          M5.Display.setTextColor(settings.theme_color);
+        } else {
+          M5.Display.drawString("G " + String(gpio_options[i_gpio_rx]), cursor_x + (margin_x / 2) + 2, cursor_y + (margin_y / 2) + 2);
+        }
+        cursor_x = cursor_x + margin_x;
+      }
+      update_gpio_rx_display = false;
+    }
+    if (M5.BtnA.wasPressed()) {
+      settings.gpio_rx = gpio_options[selected_gpio_rx_i];
+      undefined_gpio_rx = false;
+      cursor_x = 10;
+      cursor_y = 50;
+      for (int i_gpio_rx = 0; i_gpio_rx < sizeof(gpio_options) / sizeof(gpio_options[0]); i_gpio_rx++) {
+        if (cursor_x > 180) {
+          cursor_x = start_x;
+          cursor_y = cursor_y + margin_y;
+        }
+        if (settings.gpio_rx == gpio_options[i_gpio_rx]) {
+          M5.Display.fillRect(cursor_x, cursor_y, margin_x, margin_y, settings.theme_color);
+          M5.Display.setTextColor(settings.background_color);
+          M5.Display.drawString("G " + String(gpio_options[i_gpio_rx]), cursor_x + (margin_x / 2) + 2, cursor_y + (margin_y / 2) + 2);
+          M5.Display.setTextColor(settings.theme_color);
+        } else {
+          M5.Display.fillRect(cursor_x + 1, cursor_y + 1, margin_x - 2, margin_y - 2, settings.background_color);
+        }
+        cursor_x = cursor_x + margin_x;
+      }
+      delay(1000);
+    }
+  }
+}
+
+void set_gpio_tx() {
+  bool undefined_gpio_tx = true;
+  bool update_gpio_tx_display = true;
+  int selected_gpio_tx_i = findIndex(gpio_options, sizeof(gpio_options) / sizeof(gpio_options[0]), settings.gpio_tx);
+  if (selected_gpio_tx_i < 0) {
+    selected_gpio_tx_i = 0;
+  }
+  M5.Display.fillScreen(settings.background_color);
+  M5.Display.setTextSize(2);
+  M5.Display.setTextColor(settings.theme_color);
+  M5.Display.setTextDatum(top_center);
+  M5.Display.drawString("Set GPIO TX", M5.Display.width() / 2, 10);
+  M5.Display.setTextSize(1);
+  M5.Display.drawString("GPIO TX -> GPS/GNSS module RX", M5.Display.width() / 2, 35);
+  int start_x = 10;
+  int cursor_x = 10;
+  int cursor_y = 50;
+  int margin_x = 55;
+  int margin_y = 25;
+  while (undefined_gpio_tx) {
+    M5.update();
+    if (M5.BtnB.wasPressed()) {
+      selected_gpio_tx_i = selected_gpio_tx_i + 1;
+      update_gpio_tx_display = true;
+    }
+    if (selected_gpio_tx_i > (sizeof(gpio_options) / sizeof(gpio_options[0])) - 1) {
+      selected_gpio_tx_i = 0;
+    }
+    if (gpio_options[selected_gpio_tx_i] == settings.gpio_rx) {
+      selected_gpio_tx_i = selected_gpio_tx_i + 1;
+    }
+    if (selected_gpio_tx_i > (sizeof(gpio_options) / sizeof(gpio_options[0])) - 1) {
+      selected_gpio_tx_i = 0;
+    }
+    if (update_gpio_tx_display) {
+      M5.Display.fillRect(0, 50, M5.Display.width(), M5.Display.height() - 50, settings.background_color);
+      M5.Display.drawLine(10, 50, M5.Display.width() - 10, 50, settings.theme_color);
+      M5.Display.drawLine(10, 75, M5.Display.width() - 10, 75, settings.theme_color);
+      M5.Display.drawLine(10, 100, M5.Display.width() - 10, 100, settings.theme_color);
+      M5.Display.drawLine(10, 125, M5.Display.width() - 10, 125, settings.theme_color);
+      M5.Display.drawLine(10, 50, 10, 125, settings.theme_color);
+      M5.Display.drawLine(65, 50, 65, 125, settings.theme_color);
+      M5.Display.drawLine(120, 50, 120, 125, settings.theme_color);
+      M5.Display.drawLine(175, 50, 175, 125, settings.theme_color);
+      M5.Display.drawLine(230, 50, 230, 125, settings.theme_color);
+      cursor_x = 10;
+      cursor_y = 50;
+      M5.Display.setTextSize(2);
+      M5.Display.setTextDatum(middle_center);
+      for (int i_gpio_tx = 0; i_gpio_tx < sizeof(gpio_options) / sizeof(gpio_options[0]); i_gpio_tx++) {
+        if (cursor_x > 180) {
+          cursor_x = start_x;
+          cursor_y = cursor_y + margin_y;
+        }
+        if (selected_gpio_tx_i == i_gpio_tx) {
+          M5.Display.fillRect(cursor_x, cursor_y, margin_x, margin_y, settings.theme_color);
+          M5.Display.setTextColor(settings.background_color);
+          M5.Display.drawString("G " + String(gpio_options[i_gpio_tx]), cursor_x + (margin_x / 2) + 2, cursor_y + (margin_y / 2) + 2);
+          M5.Display.setTextColor(settings.theme_color);
+        } else {
+          if (settings.gpio_rx == gpio_options[i_gpio_tx]) {
+            M5.Display.drawString("RX", cursor_x + (margin_x / 2) + 2, cursor_y + (margin_y / 2) + 2);
+          } else {
+            M5.Display.drawString("G " + String(gpio_options[i_gpio_tx]), cursor_x + (margin_x / 2) + 2, cursor_y + (margin_y / 2) + 2);
+          }
+        }
+        cursor_x = cursor_x + margin_x;
+      }
+      update_gpio_tx_display = false;
+    }
+    if (M5.BtnA.wasPressed()) {
+      settings.gpio_tx = gpio_options[selected_gpio_tx_i];
+      undefined_gpio_tx = false;
+      cursor_x = 10;
+      cursor_y = 50;
+      for (int i_gpio_tx = 0; i_gpio_tx < sizeof(gpio_options) / sizeof(gpio_options[0]); i_gpio_tx++) {
+        if (cursor_x > 180) {
+          cursor_x = start_x;
+          cursor_y = cursor_y + margin_y;
+        }
+        if (settings.gpio_tx == gpio_options[i_gpio_tx]) {
+          M5.Display.fillRect(cursor_x, cursor_y, margin_x, margin_y, settings.theme_color);
+          M5.Display.setTextColor(settings.background_color);
+          M5.Display.drawString("G " + String(gpio_options[i_gpio_tx]), cursor_x + (margin_x / 2) + 2, cursor_y + (margin_y / 2) + 2);
+          M5.Display.setTextColor(settings.theme_color);
+        } else {
+          M5.Display.fillRect(cursor_x + 1, cursor_y + 1, margin_x - 2, margin_y - 2, settings.background_color);
+        }
+        cursor_x = cursor_x + margin_x;
+      }
+      delay(1000);
+    }
+  }
+}
+
+void apply_rotation() {
+  if (settings.flip_screen_horizontally) {
+    if (settings.rotate_screen_90_degrees) {
+      horizontal_screen_rotation = 2;
+    } else {
+      horizontal_screen_rotation = 1;
+    }
+  } else {
+    if (settings.rotate_screen_90_degrees) {
+      horizontal_screen_rotation = 0;
+    } else {
+      horizontal_screen_rotation = 3;
+    }
+  }
+  if (settings.flip_screen_vertically) {
+    if (settings.rotate_screen_90_degrees) {
+      vertical_screen_rotation = 3;
+    } else {
+      vertical_screen_rotation = 2;
+    }
+  } else {
+    if (settings.rotate_screen_90_degrees) {
+      vertical_screen_rotation = 1;
+    } else {
+      vertical_screen_rotation = 0;
+    }
+  }
+  M5.Display.setRotation(horizontal_screen_rotation);  // Updates the screen rotation
 }
 
 int findIndex(int array[], int size, int value) {  // Function to find the index of an array by value
@@ -2226,20 +2900,6 @@ void toggle_time_format() {
   save_settings();
 }
 
-String get_elapsed_time(unsigned long start_millis) {                // Takes the start time in millis() and returns the elapsed time
-  unsigned long elapsed_seconds = (millis() - start_millis) / 1000;  // Subtracts the current millis() and converts it to seconds
-  unsigned long hours = elapsed_seconds / 3600;                      // Gets the elapsed hours
-  unsigned long minutes = (elapsed_seconds % 3600) / 60;             // Gets the elapsed minutes
-  unsigned long seconds = elapsed_seconds % 60;                      // Gets the elapsed seconds
-  if (hours > 0) {                                                   // If more than an hour has passed
-    return String(hours) + " h " + String(minutes) + " min";         // Returns the elapsed hours and minutes
-  } else if (minutes > 0) {                                          // If more than a minute has passed
-    return String(minutes) + " min " + String(seconds) + " s";       // Returns the elapsed minutes and seconds
-  } else {                                                           // If the elapsed time is less than one minute
-    return String(seconds) + " s";                                   // Returns the elapsed time in seconds
-  }
-}
-
 String millis_to_time(unsigned long start_millis) {             // Converts the time received in millis() into hours, minutes, and seconds.
   unsigned long elapsed_seconds = start_millis / 1000;          // Subtracts the current millis() and converts it to seconds
   unsigned long hours = elapsed_seconds / 3600;                 // Gets the elapsed hours
@@ -2251,6 +2911,25 @@ String millis_to_time(unsigned long start_millis) {             // Converts the 
     return String(minutes) + " min " + String(seconds) + " s";  // Returns the elapsed minutes and seconds
   } else {                                                      // If the elapsed time is less than one minute
     return String(seconds) + " s";                              // Returns the elapsed time in seconds
+  }
+}
+
+String format_millis_in_motion_clock(unsigned long elapsed_millis, bool subtract_current_millis, bool show_full) {
+  unsigned long elapsed_seconds = elapsed_millis / 1000;
+  if (subtract_current_millis) {
+    elapsed_seconds = (millis() - elapsed_millis) / 1000;
+  }
+  unsigned long elapsed_hours = elapsed_seconds / 3600;
+  unsigned long elapsed_minutes = (elapsed_seconds % 3600) / 60;
+  unsigned long elapsed_secs = elapsed_seconds % 60;
+  if (show_full) {
+    return (elapsed_hours < 10 ? "0" : "") + String(elapsed_hours) + ":" + (elapsed_minutes < 10 ? "0" : "") + String(elapsed_minutes) + ":" + (elapsed_secs < 10 ? "0" : "") + String(elapsed_secs);
+  } else {
+    if (elapsed_hours > 0) {
+      return (elapsed_hours < 10 ? "0" : "") + String(elapsed_hours) + ":" + (elapsed_minutes < 10 ? "0" : "") + String(elapsed_minutes) + ":" + (elapsed_secs < 10 ? "0" : "") + String(elapsed_secs);
+    } else {
+      return (elapsed_minutes < 10 ? "0" : "") + String(elapsed_minutes) + ":" + (elapsed_secs < 10 ? "0" : "") + String(elapsed_secs);
+    }
   }
 }
 
@@ -2330,7 +3009,10 @@ byte percentage_to_byte(byte percentage) {  // Converts 0–100 to 0–255.
 
 void set_default_settings() {  // Sets the default firmware configuration values
   settings.module_baudrate = baudrate_options[0];
+  settings.gpio_rx = gpio_options[11];
+  settings.gpio_tx = gpio_options[10];
   settings.theme_color = theme_color_options[0];
+  settings.background_color = theme_color_options[1];
   settings.coord_format = "Decimal";
   settings.units_speed_measurement = units_speed_measurement_options[0];
   settings.unit_altitude_measurement = "Meters";
@@ -2341,14 +3023,21 @@ void set_default_settings() {  // Sets the default firmware configuration values
   settings.screen_brightness = 100;
   settings.screen_timeout_seconds = screen_timeout_options[0];
   settings.gps_timeout_seconds = 15;
+  settings.screen_update_interval_seconds = 0;
   settings.min_moving_speed = 1.0;
+  settings.flip_screen_horizontally = false;
+  settings.flip_screen_vertically = false;
+  settings.rotate_screen_90_degrees = false;
 }
 
 void save_settings() {  // Saves the current configuration to NVS so it survives reboot and power loss
   preferences.begin(SETTINGS_NAMESPACE, false);
   preferences.putBool("initialized", true);
   preferences.putInt("baudrate", settings.module_baudrate);
-  preferences.putUShort("theme", settings.theme_color);
+  preferences.putInt("gpio_rx", settings.gpio_rx);
+  preferences.putInt("gpio_tx", settings.gpio_tx);
+  preferences.putUShort("theme_color", settings.theme_color);
+  preferences.putUShort("bg_color", settings.background_color);
   preferences.putString("coord", settings.coord_format);
   preferences.putString("speed_unit", settings.units_speed_measurement);
   preferences.putString("altitude_unit", settings.unit_altitude_measurement);
@@ -2359,7 +3048,11 @@ void save_settings() {  // Saves the current configuration to NVS so it survives
   preferences.putUChar("brightness", settings.screen_brightness);
   preferences.putInt("screen_timeout", settings.screen_timeout_seconds);
   preferences.putInt("gps_timeout", settings.gps_timeout_seconds);
+  preferences.putInt("scr_upd_int", settings.screen_update_interval_seconds);
   preferences.putDouble("min_speed", settings.min_moving_speed);
+  preferences.putBool("flip_s_h", settings.flip_screen_horizontally);
+  preferences.putBool("flip_s_v", settings.flip_screen_vertically);
+  preferences.putBool("rotate_s_90", settings.rotate_screen_90_degrees);
   preferences.end();
 }
 
@@ -2370,12 +3063,15 @@ void load_settings() {                                           // Loads the sa
     // No persistent settings were found, so initialize defaults and require the user to select the GNSS baud rate
     preferences.end();       // Closes the Preferences namespace
     set_default_settings();  // Loads the default firmware settings
-    set_baudrate();          // Calls the function to set the baudrate
+    basic_settings();        // Calls the function that defines the initial settings: baud rate, GPIO RX, and GPIO TX
     save_settings();         // Saves the settings
     return;
   }
   settings.module_baudrate = preferences.getInt("baudrate", baudrate_options[0]);
-  settings.theme_color = preferences.getUShort("theme", theme_color_options[0]);
+  settings.gpio_rx = preferences.getInt("gpio_rx", gpio_options[11]);
+  settings.gpio_tx = preferences.getInt("gpio_tx", gpio_options[10]);
+  settings.theme_color = preferences.getUShort("theme_color", theme_color_options[0]);
+  settings.background_color = preferences.getUShort("bg_color", theme_color_options[1]);
   settings.coord_format = preferences.getString("coord", "Decimal");
   settings.units_speed_measurement = preferences.getString("speed_unit", units_speed_measurement_options[0]);
   settings.unit_altitude_measurement = preferences.getString("altitude_unit", "Meters");
@@ -2386,16 +3082,18 @@ void load_settings() {                                           // Loads the sa
   settings.screen_brightness = preferences.getUChar("brightness", 100);
   settings.screen_timeout_seconds = preferences.getInt("screen_timeout", screen_timeout_options[0]);
   settings.gps_timeout_seconds = preferences.getInt("gps_timeout", 15);
+  settings.screen_update_interval_seconds = preferences.getInt("scr_upd_int", 0);
   settings.min_moving_speed = preferences.getDouble("min_speed", 1.0);
+  settings.flip_screen_horizontally = preferences.getBool("flip_s_h", false);
+  settings.flip_screen_vertically = preferences.getBool("flip_s_v", false);
+  settings.rotate_screen_90_degrees = preferences.getBool("rotate_s_90", false);
   preferences.end();
 }
 
 bool validate_settings() {     // Validates settings loaded from NVS and replaces invalid values with safe defaults
   bool settings_valid = true;  // Returns true when all settings are valid, otherwise false after correcting invalid values
   bool valid_baudrate = false;
-  for (int i = 0;
-       i < sizeof(baudrate_options) / sizeof(baudrate_options[0]);
-       i++) {
+  for (int i = 0; i < sizeof(baudrate_options) / sizeof(baudrate_options[0]); i++) {
     if (settings.module_baudrate == baudrate_options[i]) {
       valid_baudrate = true;
       break;
@@ -2405,10 +3103,35 @@ bool validate_settings() {     // Validates settings loaded from NVS and replace
     settings.module_baudrate = baudrate_options[0];
     settings_valid = false;
   }
+  bool valid_gpio_rx = false;
+  for (int i = 0; i < sizeof(gpio_options) / sizeof(gpio_options[0]); i++) {
+    if (settings.gpio_rx == gpio_options[i]) {
+      valid_gpio_rx = true;
+      break;
+    }
+  }
+  if (!valid_gpio_rx) {
+    settings.gpio_rx = gpio_options[11];
+    settings_valid = false;
+  }
+  bool valid_gpio_tx = false;
+  for (int i = 0; i < sizeof(gpio_options) / sizeof(gpio_options[0]); i++) {
+    if (settings.gpio_tx == gpio_options[i]) {
+      valid_gpio_tx = true;
+      break;
+    }
+  }
+  if (!valid_gpio_tx) {
+    settings.gpio_tx = gpio_options[10];
+    settings_valid = false;
+  }
+  if (settings.gpio_rx == settings.gpio_tx) {
+    settings.gpio_rx = gpio_options[11];
+    settings.gpio_tx = gpio_options[10];
+    settings_valid = false;
+  }
   bool valid_theme_color = false;
-  for (int i = 0;
-       i < sizeof(theme_color_options) / sizeof(theme_color_options[0]);
-       i++) {
+  for (int i = 0; i < sizeof(theme_color_options) / sizeof(theme_color_options[0]); i++) {
     if (settings.theme_color == theme_color_options[i]) {
       valid_theme_color = true;
       break;
@@ -2416,6 +3139,22 @@ bool validate_settings() {     // Validates settings loaded from NVS and replace
   }
   if (!valid_theme_color) {
     settings.theme_color = theme_color_options[0];
+    settings_valid = false;
+  }
+  bool valid_background_color = false;
+  for (int i = 0; i < sizeof(theme_color_options) / sizeof(theme_color_options[0]); i++) {
+    if (settings.background_color == theme_color_options[i]) {
+      valid_background_color = true;
+      break;
+    }
+  }
+  if (!valid_background_color) {
+    settings.background_color = theme_color_options[1];
+    settings_valid = false;
+  }
+  if (settings.theme_color == settings.background_color) {
+    settings.theme_color = theme_color_options[0];
+    settings.background_color = theme_color_options[1];
     settings_valid = false;
   }
   if (settings.coord_format != "Decimal" &&
@@ -2442,9 +3181,7 @@ bool validate_settings() {     // Validates settings loaded from NVS and replace
     settings_valid = false;
   }
   bool valid_timezone = false;
-  for (int i = 0;
-       i < sizeof(timezone_options) / sizeof(timezone_options[0]);
-       i++) {
+  for (int i = 0; i < sizeof(timezone_options) / sizeof(timezone_options[0]); i++) {
     if (settings.timezone == timezone_options[i]) {
       valid_timezone = true;
       break;
@@ -2454,27 +3191,20 @@ bool validate_settings() {     // Validates settings loaded from NVS and replace
     settings.timezone = timezone_options[14];
     settings_valid = false;
   }
-  if (settings.time_format != "24-hour" &&
-      settings.time_format != "12-hour") {
+  if (settings.time_format != "24-hour" && settings.time_format != "12-hour") {
     settings.time_format = "24-hour";
     settings_valid = false;
   }
-  if (settings.date_format != "YYYY-MM-DD" &&
-      settings.date_format != "MM/DD/YYYY" &&
-      settings.date_format != "DD/MM/YYYY") {
+  if (settings.date_format != "YYYY-MM-DD" && settings.date_format != "MM/DD/YYYY" && settings.date_format != "DD/MM/YYYY") {
     settings.date_format = "YYYY-MM-DD";
     settings_valid = false;
   }
-  if (settings.screen_brightness < 10 ||
-      settings.screen_brightness > 100 ||
-      settings.screen_brightness % 10 != 0) {
+  if (settings.screen_brightness < 10 || settings.screen_brightness > 100 || settings.screen_brightness % 10 != 0) {
     settings.screen_brightness = 100;
     settings_valid = false;
   }
   bool valid_screen_timeout = false;
-  for (int i = 0;
-       i < sizeof(screen_timeout_options) / sizeof(screen_timeout_options[0]);
-       i++) {
+  for (int i = 0; i < sizeof(screen_timeout_options) / sizeof(screen_timeout_options[0]); i++) {
     if (settings.screen_timeout_seconds == screen_timeout_options[i]) {
       valid_screen_timeout = true;
       break;
@@ -2484,13 +3214,15 @@ bool validate_settings() {     // Validates settings loaded from NVS and replace
     settings.screen_timeout_seconds = screen_timeout_options[0];
     settings_valid = false;
   }
-  if (settings.gps_timeout_seconds < 1 ||
-      settings.gps_timeout_seconds > 300) {
+  if (settings.gps_timeout_seconds < 0 || settings.gps_timeout_seconds > 300) {
     settings.gps_timeout_seconds = 15;
     settings_valid = false;
   }
-  if (settings.min_moving_speed < 0.0 ||
-      settings.min_moving_speed > 100.0) {
+  if (settings.screen_update_interval_seconds < 0 || settings.screen_update_interval_seconds > 300) {
+    settings.screen_update_interval_seconds = 0;
+    settings_valid = false;
+  }
+  if (settings.min_moving_speed < 0.0 || settings.min_moving_speed > 100.0) {
     settings.min_moving_speed = 1.0;
     settings_valid = false;
   }
