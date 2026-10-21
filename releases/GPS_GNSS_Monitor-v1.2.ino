@@ -19,7 +19,7 @@
 // https://docs.m5stack.com/en/arduino/m5sticks3/program
 
 // For the M5StickS3, the recommended GPIO configuration depends on the connection interface.
-// Hat2-Bus: Set G44 as RX and G43 as TX. Connect the GPS/GNSS module's TX -> G44 and RX -> G33.
+// Hat2-Bus: Set G44 as RX and G43 as TX. Connect the GPS/GNSS module's TX -> G44 and RX -> G43.
 // HY2.0-4P: Set G10 as RX and G9 as TX. Connect the GPS/GNSS module's TX -> G10 and RX -> G9.
 
 #define VERSION_FIRMWARE 1.2  // Firmware Version
