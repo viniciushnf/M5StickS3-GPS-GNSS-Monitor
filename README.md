@@ -426,6 +426,10 @@ The available module baud rates are:
 
 `9600, 19200, 38400, 57600, 115200`
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/basic-settings-steps.webp" alt="Basic Settings Steps" width="100%">
+</p>
+
 Choose the baud rate supported by your GPS/GNSS module. RX and TX must also be configured to match the actual wiring.
 
 ### UART Signal Direction
