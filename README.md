@@ -173,7 +173,7 @@ The Settings menu provides the following configuration options:
 
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-config.gif" alt="GPS & GNSS Monitor Screens" width="70%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-settings.gif" alt="GPS & GNSS Monitor Screens" width="70%">
 </p>
 
 ---
