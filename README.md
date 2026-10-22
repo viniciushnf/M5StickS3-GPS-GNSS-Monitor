@@ -4,11 +4,13 @@
 
 # GPS & GNSS Monitor for M5StickS3
 
-GPS & GNSS Monitor transforms your **M5Stack StickS3** into a compact, real-time GPS/GNSS monitoring device.
+GPS & GNSS Monitor transforms the M5Stack StickS3 into a compact, portable GPS/GNSS monitoring device.
 
-Simply connect a compatible GPS or GNSS module through UART and the firmware can display your current position, satellite information, speed, altitude, distance traveled, course, date, time, and route statistics directly on the device.
+Connect a compatible GPS or GNSS module through UART to display positioning, satellite reception, navigation, date and time, and trip statistics directly on the device.
 
-It is designed for **portable navigation, GPS/GNSS testing, field monitoring, positioning experiments, and exploring GNSS data**.
+The firmware provides configurable UART RX and TX GPIOs, baud rate, display appearance and orientation, screen update intervals, communication timeout, measurement units, and minimum trip speed. Configuration settings are saved in non-volatile storage, allowing users to customize the device without modifying the source code.
+
+It is designed for portable navigation, GPS/GNSS module testing, field monitoring, positioning experiments, and exploring GNSS data.
 
 ---
 
@@ -644,16 +646,6 @@ The available settings can be edited directly through the device's Settings menu
 Settings are saved automatically when changed and are normally retained after restarting or powering off the device.
 
 This allows users to customize the firmware without modifying the source code for ordinary configuration changes.
-
----
-
-### 🚀 Startup Screen
-
-At startup, the firmware displays a brief introductory screen for approximately 3 seconds.
-
-The screen identifies the firmware as **GPS & GNSS Monitor**, displays its firmware version, and provides the developer's GitHub address.
-
-After the introductory screen, the firmware proceeds to the main monitoring interface.
 
 ---
 
