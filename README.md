@@ -152,19 +152,19 @@ The Settings menu provides the following configuration options:
 |---|---|
 | `Theme Color` | Select the color used for interface elements and text. |
 | `Background Color` | Select the display background color. |
-| `Brightness` | Adjust the display brightness. |
+| `Brightness` | Adjust the display brightness. 10% to 100%. |
 | `Screen Timeout` | Configure the inactivity period before the display turns off, or disable the timeout. |
 | `Screen Flip H` | Rotate horizontal screens by 180 degrees when enabled. |
 | `Screen Flip V` | Rotate vertical screens by 180 degrees when enabled. |
 | `Screen Rotate` | Apply an additional 90-degree rotation to the display. |
-| `Coord. Format` | Select the coordinate display format. |
-| `Speed Unit` | Select the speed measurement unit. |
+| `Coord. Format` | Select the coordinate display format. Decimal, DMS or DM. |
+| `Speed Unit` | Select the speed measurement unit. km/h, mph, knots or m/s. |
 | `Min. Trip Speed` | Set the minimum speed used to record route distance and time in motion. |
-| `Altitude Unit` | Select the altitude measurement unit. |
-| `Distance Unit` | Select the distance measurement unit. |
+| `Altitude Unit` | Select the altitude measurement unit. Meters or Feet. |
+| `Distance Unit` | Select the distance measurement unit. Metric or Imperial. |
 | `Timezone` | Configure the timezone used to display local date and time. |
-| `Date Format` | Select the date display format. |
-| `Time Format` | Select the time display format. |
+| `Date Format` | Select the date display format. YYYY-MM-DD, MM/DD/YYYY or DD/MM/YYYY. |
+| `Time Format` | Select the time display format. 24 hours or 12 hours. |
 | `Screen Update` | Select automatic screen updates or a fixed refresh interval. |
 | `Module Timeout` | Configure when the GPS/GNSS communication warning appears, or disable the warning. |
 | `Basic Settings` | View and configure the UART RX GPIO, TX GPIO, and baud rate. |
