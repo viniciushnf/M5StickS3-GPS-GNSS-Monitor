@@ -483,9 +483,6 @@ Before connecting a GPS/GNSS module, verify its supply voltage and UART logic-le
   <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/pcb-1.jpg" alt="PCB" width="70%">
 </p>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/pcb-9.jpg" alt="PCB" width="70%">
-</p>
-<p align="center">
   <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/photo-6.jpg" alt="Photo" width="70%">
 </p>
 <p align="center">
