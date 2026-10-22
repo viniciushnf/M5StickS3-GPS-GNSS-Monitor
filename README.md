@@ -102,8 +102,6 @@ The firmware can calculate:
 * Average moving speed
 * Minimum speed
 * Maximum speed
-* Minimum altitude
-* Maximum altitude
 * Moving time
 
 Route distance is accumulated from consecutive GPS/GNSS positions while the reported speed meets or exceeds the configured minimum trip speed. This threshold helps reduce unwanted distance accumulation caused by GPS/GNSS position drift while the device is stationary.
