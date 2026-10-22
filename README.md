@@ -456,7 +456,7 @@ The recommended GPIO configuration depends on the connection interface.
 - Connect the GPS/GNSS module's RX to **G9**.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/wiring-diagram.png" alt="GPS & GNSS Monitor Screens" width="100%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/wiring-diagram.webp" alt="GPS & GNSS Monitor Screens" width="100%">
 </p>
 
 Always verify the wiring and the pinout of your hardware before powering on the system.
