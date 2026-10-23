@@ -1,850 +1,544 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/cover.webp" alt="Cover" width="100%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/cover.webp" alt="GPS & GNSS Monitor cover" width="100%">
 </p>
 
 # GPS & GNSS Monitor for M5StickS3
 
-GPS & GNSS Monitor transforms the M5Stack StickS3 into a compact, portable GPS/GNSS monitoring device.
+GPS & GNSS Monitor turns the M5Stack StickS3 into a compact, portable device for monitoring data received from a compatible GPS/GNSS receiver over UART. It displays position, satellite reception, speed, altitude, course, date and time, as well as trip and route statistics.
 
-Connect a compatible GPS or GNSS module through UART to display positioning, satellite reception, navigation, date and time, and trip statistics directly on the device.
+The firmware is intended for portable navigation, GPS/GNSS module testing, field monitoring, positioning experiments, and learning about GNSS data. Most settings can be changed directly on the device and are saved in non-volatile storage, so you do not need to edit the source code for everyday configuration.
 
-The firmware provides configurable UART RX and TX GPIOs, baud rate, display appearance and orientation, screen update intervals, communication timeout, measurement units, and minimum trip speed. Configuration settings are saved in non-volatile storage, allowing users to customize the device without modifying the source code.
+## 🚀 Purpose and Features
 
-It is designed for portable navigation, GPS/GNSS module testing, field monitoring, positioning experiments, and exploring GNSS data.
+The firmware receives and parses GPS/GNSS NMEA data and presents it on the StickS3 display. Its main features include:
 
----
-
-## 🚀 Features
-
-- 📡 **Real-Time GPS/GNSS Monitoring** — Receive and display navigation data from a compatible GPS/GNSS module over UART.
-- 📍 **Position** — Latitude and longitude with configurable coordinate formats.
-- 🛰️ **Satellite & Position Quality** — Satellite count, HDOP, and a qualitative indication of positioning quality.
-- 🚗 **Speed** — Current, average moving, minimum, and maximum speed, with selectable measurement units.
-- ⛰️ **Altitude** — Current, minimum, and maximum altitude, with selectable units.
-- 📏 **Distance Tracking** — Straight-line distance from the trip starting position and accumulated route distance.
-- 🛣️ **Route Statistics** — Track route distance, average moving speed, minimum and maximum speed, minimum and maximum altitude, and time in motion.
-- ⏱️ **Session Information** — Monitor time in motion, trip time, and time since the first valid GPS/GNSS fix.
-- 🧭 **Course** — Display the direction of travel using GPS/GNSS course data.
-- 📅 **Date & Time** — Display GPS/GNSS date and time with configurable formats and timezone.
-- 🔌 **Configurable UART** — Select RX and TX GPIOs and the module baud rate directly on the device.
-- 🎨 **Theme & Background Colors** — Customize the interface using 14 available colors.
-- 💡 **Display Brightness** — Adjust screen brightness.
-- 🔄 **Screen Orientation** — Flip horizontal or vertical screens by 180 degrees or apply an additional 90-degree rotation.
-- 🔋 **Screen Timeout** — Configure when the display turns off after inactivity, or disable the timeout.
-- 🔃 **Screen Update Interval** — Choose automatic updates or refresh intervals of 1, 5, 15, 30, or 60 seconds.
-- ⚠️ **Configurable Communication Warning** — Set the module timeout to 5, 15, 30, or 60 seconds, or disable the warning.
-- 🚦 **Minimum Trip Speed** — Configure the minimum speed used to record route distance and time in motion, from 0 to 10 km/h in 0.5 km/h increments.
-- 📐 **Measurement & Format Settings** — Configure coordinate format, speed units, altitude units, distance units, date format, time format, and timezone.
-- 💾 **Persistent Configuration** — Settings are stored in non-volatile storage (NVS) and retained after restarting the device.
-- 🔄 **Trip Reset** — Reset trip data and route statistics.
-- 🧭 **Configurable Display Navigation** — Navigate between screens and adjust settings using the device buttons.
+- **Live GPS/GNSS data:** position, satellite count, HDOP, speed, altitude, course, date and time.
+- **Position formats:** decimal degrees, degrees/minutes/seconds (DMS), and degrees/decimal minutes (DM).
+- **Position Quality:** a firmware-generated description based on HDOP.
+- **Trip and route statistics:** straight-line distance from the starting point, accumulated route distance, average moving speed, minimum and maximum speed, minimum and maximum altitude, and time in motion.
+- **Session timers:** time in motion, trip time, and time since the first valid GPS/GNSS fix.
+- **Configurable communication:** UART RX/TX GPIO selection and baud rate.
+- **Display customization:** theme and background colors, brightness, screen timeout, and screen orientation.
+- **Configurable screen refresh:** automatic updates or fixed intervals.
+- **Communication warning:** an optional warning if new module data stops arriving.
+- **Configurable units and time display:** speed, altitude, distance, coordinate format, date format, time format, and timezone.
+- **Persistent settings:** configuration is saved in the ESP32's NVS and retained after restart.
+- **Button-based controls:** navigate screens and change settings without a computer.
 
 ---
 
-# 🖥️ Screens
+## 🖥️ Screens
+
+The firmware has main monitoring screens and a separate Settings menu. Button B navigates between screens, while Button A performs the action associated with the current screen.
+
+### Main monitoring screens
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens.gif" alt="Screens" width="70%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens.gif" alt="Main firmware screens" width="70%">
 </p>
-
-### 📡 General
-
-Provides an overview of the current GPS/GNSS status, including satellite information and position quality.
-
-The General section includes four screen layouts: one landscape layout and three portrait-oriented sub-screens.
-
-Press **Button A** to cycle through the available General layouts.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-general.gif" alt="Screens General" width="30%">
-</p>
-
-### 📍 Position
-
-Displays the current geographic coordinates.
-
-Depending on the selected coordinate format, the position can be displayed using different coordinate representations.
-
-### 🚗 Speed
-
-Displays the current speed received from the GPS/GNSS module.
-
-The speed unit can be configured in the settings.
-
-### ⛰️ Altitude
-
-Displays the current altitude reported by the GPS/GNSS module.
-
-The altitude unit can be changed between meters and feet.
-
-### 📏 Distance
-
-Displays the distance between the **trip starting point** and the current position.
-
-This is a straight-line distance and should not be confused with the accumulated route distance.
-
-### 🛣️ Route Stats
-
-Provides statistics related to the movement recorded during the current trip.
-
-The Route Stats section includes three screen layouts: one landscape layout and two portrait-oriented sub-screens.
-
-One of the portrait layouts includes a graphical indicator that compares current speed with the recorded average, minimum, and maximum speeds.
-
-Press **Button A** to cycle through the available Route Stats layouts.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-route-stats.gif" alt="Screens General" width="30%">
-</p>
-
-The firmware can calculate:
-* Total route distance
-* Average moving speed
-* Minimum speed
-* Maximum speed
-* Moving time
-
-Route distance is accumulated from consecutive GPS/GNSS positions while the reported speed meets or exceeds the configured minimum trip speed. This threshold helps reduce unwanted distance accumulation caused by GPS/GNSS position drift while the device is stationary.
-
-The minimum trip speed can be configured through the `Min. Trip Speed` setting.
-
-### 🧭 Course
-
-Displays the current direction of travel and compass direction calculated from the GNSS data.
-
-### 🕐 Time
-
-Displays the current date and time received from the GPS/GNSS module.
-
-GNSS time is received in UTC and converted according to the timezone configured in the firmware.
-
-The firmware also handles date changes when the converted time crosses midnight.
-
-### 📈 Session Info
-
-Displays three time-related values:
-
-- **Time in Motion** — Accumulated time during which the reported speed meets or exceeds the configured minimum trip speed.
-- **Trip Time** — Elapsed time since the trip started.
-- **Fix Time** — Elapsed time since the first valid GPS/GNSS fix was obtained.
-
-Time in motion is tracked separately from trip time. Therefore, time spent stationary or moving below the configured minimum trip speed is not added to the time-in-motion counter.
-
-### ℹ️ About
-
-The About screen provides firmware information, including the firmware name, version, selected RX and TX GPIOs, and module baud rate.
-
-Press **Button A** to switch to a second About view containing the developer information and a link to the project repository on GitHub. Press Button A again to return to the first view.
-
-### ⚙️ Settings
-
-The Settings menu provides access to the firmware's configurable options, including display appearance, screen orientation, GPS/GNSS communication, measurement units, date and time formats, update intervals, communication timeout, minimum trip speed, and trip reset.
-
-Configuration values are saved to NVS so that the selected preferences are retained after restarting the device.
-
-## Configuration Screens
-
-The Settings menu provides the following configuration options:
 
 | Screen | Description |
 |---|---|
-| `Theme Color` | Select the color used for interface elements and text. |
-| `Background Color` | Select the display background color. |
-| `Brightness` | Adjust the display brightness. 10% to 100%. |
-| `Screen Timeout` | Configure the inactivity period before the display turns off, or disable the timeout. |
-| `Screen Flip H` | Rotate horizontal screens by 180 degrees when enabled. |
-| `Screen Flip V` | Rotate vertical screens by 180 degrees when enabled. |
-| `Screen Rotate` | Apply an additional 90-degree rotation to the display. |
-| `Coord. Format` | Select the coordinate display format. Decimal, DMS or DM. |
-| `Speed Unit` | Select the speed measurement unit. km/h, mph, knots or m/s. |
-| `Min. Trip Speed` | Set the minimum speed used to record route distance and time in motion. |
-| `Altitude Unit` | Select the altitude measurement unit. Meters or Feet. |
-| `Distance Unit` | Select the distance measurement unit. Metric or Imperial. |
-| `Timezone` | Configure the timezone used to display local date and time. |
-| `Date Format` | Select the date display format. YYYY-MM-DD, MM/DD/YYYY or DD/MM/YYYY. |
-| `Time Format` | Select the time display format. 24 hours or 12 hours. |
-| `Screen Update` | Select automatic screen updates or a fixed refresh interval. |
-| `Module Timeout` | Configure when the GPS/GNSS communication warning appears, or disable the warning. |
-| `Basic Settings` | View and configure the UART RX GPIO, TX GPIO, and baud rate. |
-| `Reset Trip` | Reset trip data and route statistics. |
-| `Exit` | Leave the Settings menu and return to the General screen.
+| **General** | An overview of GPS/GNSS status, including satellite information and Position Quality. It has one landscape view and three portrait views. |
+| **Position** | Shows the current latitude and longitude using the selected coordinate format. |
+| **Speed** | Shows the speed reported by the GPS/GNSS module, using the selected speed unit, and includes Position Quality. |
+| **Altitude** | Shows the altitude reported by the module using meters or feet, and includes Position Quality. |
+| **Distance** | Shows the straight-line distance between the trip starting position and the current position. This is not the accumulated distance along the route. |
+| **Route Stats** | Shows accumulated route distance, average moving speed, minimum and maximum speed, minimum and maximum altitude, and time in motion. It has one landscape view and two portrait views. |
+| **Course** | Shows the direction of travel calculated from GPS/GNSS course data. Course is based on movement, not a magnetic compass. |
+| **Time** | Shows the date and time received from the module, adjusted using the configured timezone. |
+| **Session Info** | Shows Time in Motion, Trip Time, and Fix Time. |
+| **About** | Shows firmware information, including the version, selected RX/TX GPIOs, and baud rate. Button A switches to a second view with developer information and the GitHub repository link. |
 
+#### Navigating the main screens
+
+- **Button B — short press:** go to the next main screen.
+- **Button B — long press:** go to the previous main screen.
+- **Button A on General:** cycle through its available layouts, including the portrait views.
+- **Button A on Route Stats:** cycle through its available layouts, including the portrait views.
+- **Button A on About:** switch between the two About views.
+- Button A has screen-specific actions on other screens; for example, it can change a displayed format or turn the display back on after a timeout.
+
+### Settings screens
+
+The Settings menu lets you customize the display, communication, measurement formats, and trip tracking.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-settings.gif" alt="GPS & GNSS Monitor Screens" width="70%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-settings.gif" alt="Settings screens" width="70%">
 </p>
 
----
-
-# 🎛️ Button Controls
-
-The M5StickS3 buttons are used to navigate between screens, switch views, and configure the firmware.
-
-### Button B
-
-- **Short press:** Move to the next screen.
-- **Long press:** Move to the previous screen.
-
-### Button A
-
-The function of Button A depends on the current screen. It can be used to:
-
-- Change the displayed format or view.
-- Enter the Settings menu and change configuration values.
-- Switch between the four General views.
-- Switch between the three Route Stats views.
-- Switch between the two About views.
-- Open the UART configuration workflow from `Basic Settings`.
-- Confirm configuration choices.
-- Turn the display back on after a screen timeout.
-- Dismiss the GPS/GNSS communication warning.
-
-### Inside the Settings Menu
-
-- **Button B — Short press:** Move to the next setting.
-- **Button B — Long press:** Move to the previous setting.
-- **Button A:** Change, select, or confirm the current setting, depending on the screen.
-
-The `Basic Settings` configuration workflow also uses Button B to cycle through the available options and Button A to confirm each selection.
-
----
-
-# 🔋 Display Timeout
-
-The firmware includes a **display timeout** function designed to help save battery power.
-
-If there is no user interaction for the configured period of time, the display automatically turns off.
-
-GPS/GNSS processing continues normally while the display is turned off.
-
-To turn the display back on:
-
-> **Press Button A.**
-
-The display timeout can be configured through the Settings menu.
-
-You can:
-
-* ⏱️ Change the amount of time before the display turns off.
-* 🔴 Disable the display timeout completely.
-
-This allows the device to continue monitoring GPS/GNSS data without keeping the screen continuously illuminated.
-
----
-
-# ⚠️ GPS/GNSS Communication Warning
-
-The firmware monitors incoming GPS/GNSS data and can display a `Communication Warning` when no new module data is received within the configured timeout.
-
-This warning can help identify issues such as:
-
-- 🔌 A disconnected GPS/GNSS module.
-- 🔧 Incorrect UART wiring or GPIO selection.
-- ⚙️ An incorrect baud rate.
-- 📡 Temporary communication interruptions.
-- 🔋 A loss of power to the GPS/GNSS module.
-
-### Module Timeout Settings
-
-The warning timeout can be configured through the `Module Timeout` screen in the Settings menu.
-
-Available options:
-
-| Setting | Behavior |
+| Setting | Description |
 |---|---|
-| `Disabled` | Never display the communication warning, regardless of how long the module remains silent. |
-| `5 seconds` | Display the warning after 5 seconds without new module data. |
-| `15 seconds` | Display the warning after 15 seconds without new module data. |
-| `30 seconds` | Display the warning after 30 seconds without new module data. |
-| `60 seconds` | Display the warning after 60 seconds without new module data. |
+| **Theme Color** | Selects the color used for interface elements, text, and indicators. |
+| **Background Color** | Selects the display background color. |
+| **Brightness** | Adjusts display brightness from 10% to 100%. |
+| **Screen Timeout** | Sets how long the display waits without button interaction before turning off, or disables the timeout. |
+| **Screen Flip H** | Rotates horizontal layouts by 180 degrees when enabled. |
+| **Screen Flip V** | Rotates vertical layouts by 180 degrees when enabled. |
+| **Screen Rotate** | Applies an additional 90-degree rotation. |
+| **Coord. Format** | Selects Decimal, DMS, or DM coordinate formatting. |
+| **Speed Unit** | Selects km/h, mph, knots, or m/s. |
+| **Min. Trip Speed** | Sets the minimum reported speed used for trip distance and time-in-motion calculations. |
+| **Altitude Unit** | Selects meters or feet. |
+| **Distance Unit** | Selects Metric or Imperial distance display. |
+| **Timezone** | Sets the UTC offset used to display local date and time. |
+| **Date Format** | Selects YYYY-MM-DD, MM/DD/YYYY, or DD/MM/YYYY. |
+| **Time Format** | Selects 24-hour or 12-hour time. |
+| **Screen Update** | Selects automatic screen updates or a fixed refresh interval. |
+| **Module Timeout** | Sets when the Communication Warning appears, or disables the warning. |
+| **Basic Settings** | Displays and configures the UART RX GPIO, TX GPIO, and module baud rate. |
+| **Reset Trip** | Resets trip-related timers, distances, and statistics. |
+| **Exit** | Leaves Settings and returns to the General screen. |
 
-The warning does not stop the firmware. When it appears, press **Button A** to dismiss it and continue using the device.
+#### Navigating Settings
 
-Disabling the warning does not disable GPS/GNSS communication monitoring itself; it only prevents this warning from being displayed.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screen-warning.jpg" alt="GPS & GNSS Monitor Screens" width="50%">
-</p>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screen-general-warning.jpg" alt="GPS & GNSS Monitor Screens" width="50%">
-</p>
-
----
-
-# 🔃 Screen Update Interval
-
-The firmware allows you to control how frequently the display is refreshed through the `Screen Update` setting.
-
-Available options:
-
-| Setting | Behavior |
-|---|---|
-| `Automatic` | Refresh the display when new GPS/GNSS data is received. |
-| `1 second` | Refresh the display at 1-second intervals. |
-| `5 seconds` | Refresh the display at 5-second intervals. |
-| `15 seconds` | Refresh the display at 15-second intervals. |
-| `30 seconds` | Refresh the display at 30-second intervals. |
-| `60 seconds` | Refresh the display at 60-second intervals. |
-
-In automatic mode, the display updates as new GPS/GNSS information is received.
-
-When a fixed interval is selected, GPS/GNSS data processing continues independently of the display refresh interval. The screen can therefore show updates less frequently without requiring the module to change its output rate.
-
-**Important:** Button interactions that require a screen change or an immediate redraw are not restricted by the selected refresh interval. Navigating between screens and interacting with settings can trigger a refresh immediately.
-
-This feature is useful when working with GPS/GNSS modules that send data frequently and you want to reduce unnecessary screen redraws.
+- **Button B — short press:** move to the next setting.
+- **Button B — long press:** move to the previous setting.
+- **Button A:** change, select, or confirm the current setting.
+- The **Basic Settings** workflow uses Button B to cycle through choices and Button A to confirm each choice.
 
 ---
 
-# 🎨 Display Appearance & Orientation
+## 🎛️ Features and Configuration Guide
 
-The firmware provides several options for customizing the display's appearance and orientation.
+### ➡️ Display colors, brightness, and orientation
 
-### Theme Color
-
-`Theme Color` controls the color used for interface elements, text, and visual indicators.
-
-### Background Color
-
-`Background Color` controls the display's background color.
-
-The firmware provides 14 available colors for both settings:
+**Theme Color** controls the color of text, interface elements, and visual indicators. **Background Color** controls the background. Both settings offer these 14 colors:
 
 `WHITE`, `BLACK`, `RED`, `GREEN`, `BLUE`, `YELLOW`, `CYAN`, `MAGENTA`, `ORANGE`, `PURPLE`, `PINK`, `NAVY`, `BROWN`, `GRAY`
 
-The theme color and background color cannot be set to the same color, preventing the interface from becoming unreadable.
+The theme and background colors cannot be set to the same color, which helps keep the screen readable.
 
-### Screen Orientation
+**Brightness** can be set from 10% to 100%. A lower brightness may make the display more comfortable in dark environments and can reduce display power consumption.
 
-The firmware provides three orientation settings:
+The orientation options are:
 
-- **Screen Flip H:** Rotates horizontal screens by 180 degrees when enabled.
-- **Screen Flip V:** Rotates vertical screens by 180 degrees when enabled.
-- **Screen Rotate:** Applies an additional 90-degree rotation through the display rotation configuration.
+- **Screen Flip H:** rotates horizontal screens by 180 degrees.
+- **Screen Flip V:** rotates vertical screens by 180 degrees.
+- **Screen Rotate:** applies an additional 90-degree rotation.
 
-These options can help correct display orientation issues and make it easier to adapt the firmware to other hardware with different display orientations.
+These options help correct the display orientation for different ways of mounting or holding the device. They are especially useful if the StickS3 or a compatible device is installed in an orientation that differs from the usual one.
 
-### Screen Timeout
+### ➡️ Portrait layouts for General and Route Stats
 
-`Screen Timeout` controls how long the device can remain without user interaction before the display turns off.
+Both **General** and **Route Stats** include portrait-oriented layouts in addition to their landscape layout. When either screen is open, press **Button A** to cycle through its available layouts.
 
-The timeout can be configured for 10, 30, 60, 300, or 600 seconds, or disabled completely.
-
-When the display turns off, GPS/GNSS processing continues. Press **Button A** to turn the display back on.
-
----
-
-# 🚗 Minimum Trip Speed & Time in Motion
-
-The `Min. Trip Speed` setting controls the minimum GPS/GNSS-reported speed required for the firmware to record route distance and accumulate time in motion.
-
-### Minimum Trip Speed
-
-Available values range from `0` to `10 km/h`, in increments of `0.5 km/h`.
-
-The selected value is displayed using the configured speed measurement unit.
-
-A higher threshold can help reduce unwanted route-distance accumulation caused by GPS/GNSS position drift while the device is stationary. A lower threshold allows slower movement to be included in the trip statistics.
-
-### Time in Motion
-
-Time in motion is accumulated only while the reported speed is equal to or greater than the configured minimum trip speed.
-
-This value is different from trip time:
-
-- **Trip Time:** Elapsed time since the trip started.
-- **Time in Motion:** Accumulated time during which the speed meets the minimum trip speed threshold.
-- **Fix Time:** Elapsed time since the first valid GPS/GNSS fix was obtained.
-
-Time in motion is available on the `Session Info` screen and in the route statistics.
-
-The minimum speed threshold affects route distance recording and time-in-motion accumulation. It does not change the GPS/GNSS module's reported speed.
-
----
-
-# 📡 GPS/GNSS Compatibility
-
-GPS & GNSS Monitor is designed to work with GPS/GNSS modules that provide standard **NMEA data over UART**.
-
-The firmware communicates with the module using:
-
-```text
-SERIAL_8N1
-```
-
-This means:
-
-* 8 data bits
-* No parity
-* 1 stop bit
-
-The firmware supports several common UART baud rates, including:
-
-* 9600
-* 19200
-* 38400
-* 57600
-* 115200
-
-Different GPS/GNSS modules can provide different levels of:
-
-* 📍 Position accuracy
-* 🛰️ Satellite acquisition performance
-* ⚡ Fix acquisition speed
-* 📡 Signal sensitivity
-* 🔄 Update rate
-
-Therefore, the overall performance of the system depends not only on the firmware, but also on the GPS/GNSS module, antenna, satellite visibility, environment, and signal conditions.
-
----
-
-## 🔌 UART Configuration
-
-The `Basic Settings` screen displays the currently selected UART RX GPIO, TX GPIO, and baud rate.
-
-Press **Button A** on this screen to configure the communication settings. The firmware guides you through selecting the RX GPIO, TX GPIO, and baud rate.
-
-During configuration:
-
-- **Button B:** Cycle through the available options.
-- **Button A:** Confirm the selected option and continue.
-
-The available GPIO options for RX and TX are:
-
-`1, 2, 9, 10, 13, 15, 26, 32, 33, 36, 43, 44`
-
-The firmware does not allow the same GPIO to be selected for both RX and TX.
-
-The available module baud rates are:
-
-`9600, 19200, 38400, 57600, 115200`
+General has four layouts in total: one landscape layout and three portrait layouts. Route Stats has three layouts: one landscape layout and two portrait layouts.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/basic-settings-steps.webp" alt="Basic Settings Steps" width="100%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-general.gif" alt="General screen layouts" width="30%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-route-stats.gif" alt="Route Stats screen layouts" width="30%">
 </p>
 
-Choose the baud rate supported by your GPS/GNSS module. RX and TX must also be configured to match the actual wiring.
+### ➡️ Trip and route statistics are estimates
 
-### UART Signal Direction
+The firmware calculates several useful trip values from the data received from the GPS/GNSS module:
 
-UART connections must be crossed:
+- **Route Distance:** adds the distances between consecutive reported positions while the firmware considers the device to be moving.
+- **Average Moving Speed:** estimates average speed during qualifying movement, rather than averaging in all time spent stationary.
+- **Time in Motion:** accumulates time while reported speed meets the configured Min. Trip Speed.
+- **Minimum and Maximum Speed:** records the lowest and highest qualifying speed values used by the trip statistics.
+- **Minimum and Maximum Altitude:** records the minimum and maximum altitude values tracked for the current trip.
+- **Speed indicator bar:** on the second Route Stats portrait view, the indicator compares current speed with the recorded minimum, average, and maximum speeds. Its position varies between the minimum and maximum values, with the average represented around the middle reference point.
 
-- **GPS/GNSS module TX → Firmware RX GPIO**
-- **GPS/GNSS module RX ← Firmware TX GPIO**
+<img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/route-stats-speed.gif" alt="Speed indicator bar" width="30%">
 
-The module's TX signal sends data to the firmware. The firmware's TX signal is used to transmit data to the module's RX input.
+These values are **estimates, not precision surveying measurements**. GNSS positions naturally fluctuate, and accuracy depends on the receiver, antenna, satellite geometry, signal quality, surroundings, obstructions, and other conditions. Small position errors can affect accumulated route distance and other statistics. The Min. Trip Speed threshold can reduce unwanted movement detection while stationary, but it cannot eliminate every source of error.
 
-### Recommended M5StickS3 Connections
+### ➡️ Minimum Trip Speed
 
-The recommended GPIO configuration depends on the connection interface.
+**Min. Trip Speed** defines the minimum GPS/GNSS-reported speed at which the firmware considers the device to be moving for selected trip calculations. The available setting ranges from **0 to 10 km/h in 0.5 km/h increments**; the displayed value follows the selected speed unit.
+
+When the reported speed is equal to or greater than this threshold, the firmware can accumulate **Time in Motion** and **Route Distance**, and update related moving-speed statistics such as average, minimum, and maximum speed. If reported speed is below the threshold, these movement-based calculations do not accumulate for that interval.
+
+A higher threshold can help prevent small GNSS position changes from being counted as travel while the device is stationary. A lower threshold allows slower movement to count. This setting does **not** change the speed reported by the GPS/GNSS module itself.
+
+### ➡️ Straight-line distance — Distance screen
+
+The **Distance** screen measures the straight-line distance from the trip's starting position to the current position. When trip tracking begins, the firmware stores a reference position and calculates the distance from that point as new position data arrives.
+
+This is different from Route Distance. If you travel along winding roads or walk around an area and return close to the starting point, the straight-line distance can be small even though the actual route was much longer.
+
+### ➡️ Session Info: Time in Motion, Trip Time, and Fix Time
+
+The **Session Info** screen shows three different timers:
+
+- **Time in Motion:** accumulated time when the reported speed is equal to or greater than Min. Trip Speed.
+- **Trip Time:** elapsed time since the trip timer started. Unlike Time in Motion, it includes time spent stationary or moving below the minimum speed threshold.
+- **Fix Time:** elapsed time since the first valid GPS/GNSS fix was obtained.
+
+Time in Motion is therefore normally shorter than Trip Time if the device spends part of the trip stopped or moving below the threshold. Fix Time describes how long it has been since the first valid fix, not how long the device has been moving.
+
+### ➡️ Reset Trip
+
+Choose **Reset Trip** in Settings to reset the trip tracking data, including:
+
+- Time in Motion and Trip Time.
+- The reference starting point used by the straight-line Distance screen.
+- Accumulated Route Distance and average moving speed.
+- Minimum and maximum speed.
+- Minimum and maximum altitude.
+
+After the reset, these values begin to be calculated again as new GPS/GNSS data is received. Reset Trip does not improve the receiver's signal or accuracy; it simply starts a fresh set of trip measurements.
+
+### ➡️ Why it can help to reset after the first fix
+
+The first fixes after a GPS/GNSS receiver starts may be less stable than later readings. While the receiver is acquiring satellites and refining its solution, position, speed, or altitude can fluctuate. These early readings may affect Time in Motion, Trip Time, the starting reference position for straight-line distance, Route Distance, average/minimum/maximum speed, and minimum/maximum altitude.
+
+For more representative trip statistics, wait until the module's readings and position quality have settled, then open **Settings → Reset Trip** and reset the trip data. The firmware will calculate the trip values again from the data received after the reset. This is a practical recommendation, not a guarantee of a particular accuracy level.
+
+### ➡️ Basic Settings: UART pins and baud rate
+
+The **Basic Settings** screen displays the current RX GPIO, TX GPIO, and baud rate. It also provides a guided workflow to change them.
+
+Basic Settings is shown automatically when the firmware starts and cannot find saved settings in NVS—for example, the first time the firmware runs or after the saved configuration has been cleared. Follow the on-screen instructions to choose the RX GPIO, TX GPIO, and baud rate.
+
+Available GPIO choices:
+
+`1`, `2`, `9`, `10`, `13`, `15`, `26`, `32`, `33`, `36`, `43`, `44`
+
+Available baud rates:
+
+`9600`, `19200`, `38400`, `57600`, `115200`
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/basic-settings-steps.webp" alt="Basic Settings configuration workflow" width="100%">
+</p>
+
+The same GPIO cannot be selected for both RX and TX. Not every GPIO listed in the menu is physically accessible on the StickS3. The list is intentionally broad so the firmware can be adapted to other compatible hardware, including other devices in the M5Stack family. A menu option does not mean that the pin is exposed or suitable on every device: check the target board's pinout before selecting it.
+
+### ➡️ Screen Update
+
+**Screen Update** controls how often the display is refreshed:
+
+| Option | Behavior |
+|---|---|
+| **Automatic** | Refreshes the display when new GPS/GNSS data is received. |
+| **1 second** | Refreshes at one-second intervals. |
+| **5 seconds** | Refreshes every five seconds. |
+| **15 seconds** | Refreshes every fifteen seconds. |
+| **30 seconds** | Refreshes every thirty seconds. |
+| **60 seconds** | Refreshes every sixty seconds. |
+
+A fixed display refresh interval does not change the GPS/GNSS module's output rate or stop the firmware from processing incoming data. It only reduces how often the display is redrawn. Screen changes and interactions that require an immediate redraw can still refresh the screen immediately.
+
+### ➡️ Screen Timeout
+
+**Screen Timeout** turns the display off after a period without button interaction. Available options are **Disabled**, **10 seconds**, **30 seconds**, **60 seconds**, **300 seconds (5 minutes)**, and **600 seconds (10 minutes)**.
+
+When the display turns off, GPS/GNSS data processing continues. Press **Button A** to turn the display back on. Disabling the timeout keeps the display on until it is turned off by another action or the device loses power. Using a timeout can reduce the time the display remains illuminated and may help save battery power.
+
+### ➡️ Module Timeout and Communication Warning
+
+The firmware checks whether new GPS/GNSS module data is arriving. **Module Timeout** controls when the **Communication Warning** appears if no new data is received.
+
+Available options are **Disabled**, **5 seconds**, **15 seconds**, **30 seconds**, and **60 seconds**. The warning can help identify a disconnected module, incorrect UART wiring or GPIO selection, a mismatched baud rate, an interruption in communication, or a loss of power to the module.
+
+The warning does not stop the firmware. Press **Button A** to dismiss it. Choosing **Disabled** hides the warning; it does not disable the firmware's handling of GPS/GNSS communication.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screen-warning.jpg" alt="Communication Warning screen" width="50%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screen-general-warning.jpg" alt="Communication Warning on General screen" width="50%">
+</p>
+
+### ➡️ Course is direction of travel, not a compass
+
+**Course** is the direction in which the device is moving, calculated from GPS/GNSS navigation data. It is **not a magnetic compass** and does not measure which way the device is facing while stationary. A meaningful course generally requires movement; when there is no movement, the receiver may not provide a useful course value.
+
+### ➡️ Measurement units and coordinate formats
+
+The firmware converts values for display according to the selected setting. Changing a unit changes how a value is presented, not the GPS/GNSS receiver's underlying measurement.
+
+| Setting | Available options | What changes |
+|---|---|---|
+| **Coord. Format** | Decimal, DMS, DM | How latitude and longitude are written. |
+| **Speed Unit** | km/h, mph, knots, m/s | The displayed speed values, including speed statistics. |
+| **Altitude Unit** | Meters, Feet | The displayed altitude values. |
+| **Distance Unit** | Metric, Imperial | Distance units used by Distance and Route Stats. Metric uses meters/kilometers; Imperial uses feet/miles as appropriate for the display. |
+
+Coordinate formats mean:
+
+- **Decimal:** decimal degrees, such as `-23.550520`.
+- **DMS:** degrees, minutes, and seconds.
+- **DM:** degrees and decimal minutes.
+
+Distance values are scaled for readability. In Metric mode, values can be shown in meters or kilometers; in Imperial mode, values use the corresponding imperial distance units. Speed can be displayed in kilometers per hour, miles per hour, knots, or meters per second. Altitude can be displayed in meters or feet.
+
+### ➡️ Date, time format, and timezone
+
+GPS/GNSS time is received in UTC. The firmware applies the selected **Timezone** offset when displaying local date and time. The available timezone list includes UTC offsets from **UTC−12:00 to UTC+14:00**, including several half-hour and quarter-hour offsets.
+
+**Date Format** options:
+
+- `YYYY-MM-DD`
+- `MM/DD/YYYY`
+- `DD/MM/YYYY`
+
+**Time Format** options:
+
+- **24-hour:** displays hours, minutes, and seconds.
+- **12-hour:** displays AM or PM, but does not display seconds.
+
+The firmware also handles date changes when the time adjusted to the selected timezone crosses midnight.
+
+### ➡️ Position Quality
+
+**Position Quality** is calculated by the firmware from HDOP; it is not a separate quality label sent by the GPS/GNSS module. HDOP describes satellite geometry and is an indicator of how favorable that geometry is for horizontal positioning. Lower HDOP generally indicates better geometry, but HDOP is not a direct measurement of position error in meters.
+
+| HDOP value | Position Quality |
+|---|---|
+| `< 0.7` | Excellent |
+| `0.7 to < 1.5` | Good |
+| `1.5 to < 3.0` | Moderate |
+| `3.0 to < 5.0` | Poor |
+| `≥ 5.0` | Very Poor |
+
+If a valid HDOP value has not yet been obtained, the firmware displays **No Fix**. Position Quality appears on the **General**, **Position**, **Speed**, and **Altitude** screens where applicable to the displayed layout.
+
+### ➡️ NVS: saving configuration
+
+The ESP32 includes **NVS (Non-Volatile Storage)**, a storage area that retains small configuration values when the device is restarted or powered off. GPS & GNSS Monitor uses NVS to save its settings, such as UART pins and baud rate, display colors and brightness, orientation, screen timeout and refresh interval, communication timeout, minimum trip speed, units, coordinate format, timezone, and date/time formats.
+
+Settings are saved when changed, so ordinary customization does not require editing the source code. If the firmware cannot find a saved configuration, it opens the Basic Settings setup workflow at startup.
+
+---
+
+## 📡 GPS/GNSS Module Compatibility and Electrical Safety
+
+### What makes a module compatible?
+
+The firmware is designed for GPS/GNSS receivers that output standard **NMEA data over UART** and can be configured to use one of the supported baud rates. The firmware uses UART communication in `SERIAL_8N1` format: 8 data bits, no parity, and 1 stop bit.
+
+A module is not guaranteed to work simply because it is described as a GPS or GNSS module. Before connecting one, check its documentation to confirm that it can output compatible NMEA data over UART, that its baud rate is supported, and that its voltage and logic levels are safe for the StickS3. Verify compatibility before testing an unfamiliar module.
+
+### GPS versus GNSS
+
+**GPS** is the satellite navigation system operated by the United States. **GNSS** is the broader term for Global Navigation Satellite Systems and can include GPS, Galileo, GLONASS, BeiDou, and other satellite constellations. A GNSS receiver that can use multiple constellations may be able to use more satellites in suitable conditions, but actual performance depends on the receiver, antenna, environment, and satellite visibility.
+
+### Baud rates
+
+The firmware offers these module baud rates:
+
+`9600`, `19200`, `38400`, `57600`, `115200`
+
+The selected rate must match the rate at which the module sends UART data. If the rates do not match, the StickS3 may receive unreadable data or no valid GPS/GNSS information. The baud rate selected in **Basic Settings** is the module communication rate; it is separate from the baud rate used by a computer when flashing the firmware.
+
+### Voltage and UART logic-level safety
+
+**Check voltage compatibility before connecting or powering the hardware.** The module's required supply voltage must be compatible with the voltage supplied by your chosen StickS3 connection (3.3 V or 5 V, depending on the connection and hardware specification). Do not assume that every module accepts either voltage.
+
+Also check the module's UART signal levels, especially its **TX output**, which connects to the StickS3's RX input. The StickS3's GPIO logic is 3.3 V; the signal delivered to its GPIO must stay within the level supported by the StickS3. A module powered from 5 V may still output 5 V UART logic, which can damage the StickS3 if connected directly. Use a suitable level shifter or other properly designed interface if the module's TX signal is not 3.3 V-compatible.
+
+Connect **GND to GND**, cross the UART signals correctly, and verify the module pinout before powering on:
+
+- Module **TX → StickS3 RX**
+- Module **RX ← StickS3 TX** (if the module requires receiving commands)
+- Module **GND ↔ StickS3 GND**
+
+The module's supply voltage and UART logic voltage are separate specifications; verify both in the module documentation.
+
+### Accuracy and receiver quality
+
+Different receivers, antennas, antenna placement, satellite visibility, signal strength, buildings, trees, reflections, atmospheric conditions, and other environmental factors can change fix acquisition time and the accuracy of position, speed, and altitude. The firmware displays and processes the information received from the receiver; it cannot create accuracy that the receiver's data does not provide.
+
+For more reliable results, use a good-quality module and antenna, allow the receiver time to acquire a stable fix, and test in an environment with a clear view of the sky when possible.
+
+### Recommended module: REYAX RYS352A
+
+I used the **REYAX RYS352A** during development and testing and strongly recommend it based on my experience. In my tests, it provided excellent positioning quality and precision and acquired satellites quickly. Results can still vary with antenna placement, environment, and satellite conditions.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/RYS352A.png" alt="REYAX RYS352A GNSS module" width="70%">
+</p>
+
+- **Official product page:** [reyax.com/product/GPS-GNSS/RYS352A](https://reyax.com/product/GPS-GNSS/RYS352A)
+- **DigiKey:** [digikey.com/en/products/detail/reyax/RYS352A/22206992](https://www.digikey.com/en/products/detail/reyax/RYS352A/22206992)
+- **eBay:** [ebay.com/itm/187031730034](https://www.ebay.com/itm/187031730034)
+- **Amazon:** [amazon.com/dp/B0CM5JTJL7](https://www.amazon.com/dp/B0CM5JTJL7?lv=shuf&language=zh_TW&channelId=500&plpRedirect=mhFallback)
+
+---
+
+## 🔌 Wiring Diagram and UART Configuration
+
+UART uses crossed signal connections: the module's TX sends data to the firmware's RX, and the firmware's TX connects to the module's RX if communication in that direction is needed.
+
+### Recommended StickS3 connections
+
+For the M5StickS3, these are the recommended pin assignments described for the respective connector:
 
 #### Hat2-Bus
-
-- Configure **G44 as RX**.
-- Configure **G43 as TX**.
-- Connect the GPS/GNSS module's TX to **G44**.
-- Connect the GPS/GNSS module's RX to **G43**, following the recommended Hat2-Bus wiring.
+| StickS3 connection | Configure as | Connect to module |
+|---|---|---|
+| **Hat2-Bus G44** | RX | Module TX |
+| **Hat2-Bus G43** | TX | Module RX |
 
 #### HY2.0-4P
-
-- Configure **G10 as RX**.
-- Configure **G9 as TX**.
-- Connect the GPS/GNSS module's TX to **G10**.
-- Connect the GPS/GNSS module's RX to **G9**.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/wiring-diagram.webp" alt="GPS & GNSS Monitor Screens" width="100%">
-</p>
-
-Always verify the wiring and the pinout of your hardware before powering on the system.
-
-### GPIO Availability and Hardware Adaptation
-
-Not every GPIO available in the firmware's selection menu is physically accessible on the M5StickS3.
-
-The GPIO list is intentionally broader to make the firmware easier to adapt to other devices, including the M5 Cardputer and other devices in the M5Stick family.
-
-The available GPIOs, their physical accessibility, and their suitability for UART communication depend on the target device. Before selecting a GPIO, verify that it exists on your hardware and can be used for the required UART signal.
-
-Selecting a GPIO in the firmware does not make that pin physically available on the device.
-
-### Electrical Compatibility
-
-Before connecting a GPS/GNSS module, verify its supply voltage and UART logic-level requirements. Connect the module's GND to the device's GND, and use a compatible power supply.
-
----
-
-# 🧰 Hardware Assembly
+| StickS3 connection | Configure as | Connect to module |
+|---|---|---|
+| **HY2.0-4P G10** | RX | Module TX |
+| **HY2.0-4P G9** | TX | Module RX |
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/pcb-1.jpg" alt="PCB" width="70%">
-</p>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/photo-6.jpg" alt="Photo" width="70%">
-</p>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/RYS352A-wiring-diagram.webp" alt="RYS352A wiring diagram" width="70%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/wiring-diagram.webp" alt="GPS/GNSS UART wiring diagram" width="100%">
 </p>
 
-For my hardware setup, I soldered the necessary pins to a small PCB and wired the GPS/GNSS module and the StickS3 together.
+Always confirm the pinout for your specific module and StickS3 connection before wiring. If the module only sends NMEA data and does not need to receive commands, its RX connection may not be needed for basic monitoring.
 
-This creates a compact assembly where the GPS/GNSS module and the StickS3 remain firmly attached to each other.
+### Available GPIOs and baud rates
 
-This type of assembly is especially useful for:
+RX and TX can each be selected from the following firmware options:
 
-* Portable GPS/GNSS testing
-* Field experiments
-* Navigation
-* Development and prototyping
-* Long-term monitoring
+`1`, `2`, `9`, `10`, `13`, `15`, `26`, `32`, `33`, `36`, `43`, `44`
 
-The exact mechanical assembly can be adapted according to the GPS/GNSS module being used.
+Available baud rates:
+
+`9600`, `19200`, `38400`, `57600`, `115200`
+
+These settings are available on the **Basic Settings** screen. Press Button A to enter the configuration workflow, use Button B to cycle through the available choices, and press Button A to confirm each one. The same GPIO cannot be used for RX and TX.
+
+The GPIO list includes pins intended to make the firmware adaptable to other hardware, including other M5Stack devices. Some listed pins may not be physically exposed on the M5StickS3, or may not be suitable for a particular connector or peripheral. Selecting a GPIO in the menu does not make it physically accessible. Check your board's pinout and confirm that the selected pins are available before connecting the module.
 
 ---
 
-# ⭐ Recommended GPS/GNSS Module
+## 💻 Installation
 
-I developed and tested the firmware using the **REYAX RYS352A**, supplied by REYAX.
+There are three ways to install GPS & GNSS Monitor: through M5Burner, by flashing the `.bin` firmware file, or by compiling the source code with Arduino IDE.
 
-I was very satisfied with the module during my tests, particularly with its **quality, positioning precision, and fast FIX acquisition**.
-
-For this reason, I strongly recommend the RYS352A for anyone looking for a high-quality GPS/GNSS module for this project.
-
-The RYS352A supports multiple GNSS systems and provides NMEA output over UART, with navigation updates of up to 10 Hz.
+### 1. Install using M5Burner
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/RYS352A.png" alt="GPS & GNSS Monitor Screens" width="70%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-gps-gnss-monitor.webp" alt="GPS & GNSS Monitor in M5Burner" width="70%">
 </p>
 
-### 🛰️ REYAX RYS352A
+M5Burner is a convenient option because it lets you install the firmware without manually downloading a `.bin` file.
 
-Official product page:
+#### You can access the Firmware page in M5Burner in one of the following ways:
 
-https://reyax.com/product/GPS-GNSS/RYS352A
-
-Purchase options:
-
-* **DigiKey:** https://www.digikey.com/en/products/detail/reyax/RYS352A/22206992
-* **eBay:** https://www.ebay.com/itm/187031730034
-* **Amazon:** https://www.amazon.com/dp/B0CM5JTJL7?lv=shuf&language=zh_TW&channelId=500&plpRedirect=mhFallback
-
----
-
-# 🎯 Position Accuracy
-
-The actual positioning accuracy depends on several factors, including:
-
-* GPS/GNSS module
-* Antenna quality
-* Number of satellites in view
-* Satellite geometry
-* Signal strength
-* Indoor or outdoor environment
-* Obstructions
-* Multipath effects
-* Atmospheric conditions
-
-Different modules can therefore produce different results even when running the same firmware.
-
-The REYAX RYS352A used during development provided very good results in my tests, including good precision and fast FIX acquisition.
-
-The firmware itself does not artificially improve the positioning accuracy provided by the GNSS receiver. It displays and processes the information received from the module.
-
----
-
-# 📊 HDOP and Position Quality
-
-The firmware also uses **HDOP (Horizontal Dilution of Precision)** as an indicator related to horizontal positioning quality.
-
-HDOP is affected by satellite geometry and can help indicate how favorable the current satellite configuration is for determining the horizontal position.
-
-A lower HDOP generally indicates better satellite geometry, while a higher value indicates less favorable geometry.
-
-However, HDOP should not be interpreted as a direct measurement of position accuracy in meters.
-
-The firmware displays HDOP and converts the value into a qualitative description.
-
-The current implementation uses the following ranges:
-
-|          HDOP | Firmware indication     |
-| ------------- | ----------------------- |
-|       `< 0.7` | **Excellent**           |
-| `0.7 – < 1.5` | **Good**                |
-| `1.5 – < 3.0` | **Moderate**            |
-| `3.0 – < 5.0` | **Poor**                |
-|       `≥ 5.0` | **Very Poor**           |
-
-When no valid HDOP value has been obtained yet, the firmware displays: No Fix.
-
----
-
-# 🛣️ Distance and Route Statistics
-
-The firmware uses two different concepts for distance.
-
-## 📏 Distance
-
-The **Distance** screen calculates the straight-line distance between:
-
-```text
-Trip starting position
-        ↓
-Current position
-```
-
-This means it represents the displacement from the starting point rather than the actual path traveled.
-
-For example, if you travel around a large area and eventually return close to your starting point, the Distance value may become small even though you have traveled a much longer route.
-
----
-
-## 🛣️ Route Stats
-
-**Route Stats** calculates accumulated route distance.
-
-The firmware calculates the distance between consecutive GNSS positions and adds these values together while the device is considered to be moving.
-
-Conceptually:
-
-```text
-Point 1 → Point 2
-Point 2 → Point 3
-Point 3 → Point 4
-Point 4 → Point 5
-        ↓
-Accumulated Route Distance
-```
-
-To prevent small GNSS position variations while stationary from being interpreted as movement, the firmware only accumulates route distance when the GNSS-reported speed is above the configured internal minimum moving speed.
-
-### ⚠️ Route Stats is an estimate
-
-Route Stats should be considered an **estimate of the distance traveled**, not a precision surveying measurement.
-
-GNSS positioning naturally contains small variations. Because of this, the calculated route distance can differ from the actual physical distance traveled.
-
-The minimum moving-speed threshold helps reduce stationary GNSS drift, but it cannot completely eliminate measurement errors.
-
-The minimum moving-speed value is an **internal firmware parameter** and cannot currently be changed through the Settings menu.
-
----
-
-# 💾 Persistent Settings
-
-GPS & GNSS Monitor stores its configuration in the ESP32's non-volatile storage (NVS).
-
-The available settings can be edited directly through the device's Settings menu, including:
-
-- UART RX and TX GPIOs and module baud rate.
-- Theme and background colors.
-- Display brightness, timeout, and orientation.
-- Screen update interval and module timeout.
-- Minimum trip speed.
-- Coordinate format and measurement units.
-- Timezone, date format, and time format.
-
-Settings are saved automatically when changed and are normally retained after restarting or powering off the device.
-
-This allows users to customize the firmware without modifying the source code for ordinary configuration changes.
-
----
-
-# 💻 Installation
-
-There are three ways to install GPS & GNSS Monitor.
-
-## 1. 📦 Install the `.bin` Firmware
-
-Both firmware options can be installed on the StickS3 using the same flashing procedure with **ESP Tool JS**.
-
-Espressif ESP Tool JS: [https://espressif.github.io/esptool-js/](https://espressif.github.io/esptool-js/)
-
-> **Recommendation:** Use **Google Chrome** when accessing ESP Tool JS, as it generally provides the best Web Serial support for this type of browser-based flashing tool.
-
-### Entering Programming Mode
-
-Before flashing the firmware, the StickS3 must be placed into **download/programming mode**.
-
-1. Press and hold the **Power button**.
-2. Keep the button pressed until the indicator LED starts flashing.
-3. The StickS3 is now ready to be programmed.
-
-### Flashing Procedure
-
-1. Put the StickS3 into programming mode.
-2. Connect the StickS3 to your computer using USB.
-3. Download `GPS_GNSS_Monitor.bin` from this repository.
-4. Open [ESP Tool JS](https://espressif.github.io/esptool-js/).
-5. Set the baud rate to `115200`.
-6. Select the StickS3's **COM port**.
-7. Select the `.bin` file in ESP Tool JS.
-8. Set **Flash Address** to `0x0`.
-9. Set **Flash Mode** to `dio`.
-10. Set **Flash Frequency** to `80m`.
-11. Set **Flash Size** to `8MB`.
-12. Start the flashing process.
-13. Wait for the process to finish.
-14. Restart the StickS3.
-
-### ESP Tool JS screenshots
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/esptool-1.png" alt="ESPTool 1" width="70%">
-</p>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/esptool-2.png" alt="ESPTool 2" width="70%">
-</p>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/esptool-3.png" alt="ESPTool 3" width="70%">
-</p>
-
-### Required Settings
-
-When flashing either firmware, use the following settings:
-
-| ESP Tool JS Setting | Value    |
-| ------------------- | -------- |
-| **Baudrate**        | `115200` |
-| **Flash Address**   | `0x0`    |
-| **Flash Mode**      | `dio`    |
-| **Flash Frequency** | `80m`    |
-| **Flash Size**      | `8MB`    |
-
----
-
-## 2. 🛠️ Install Using Arduino IDE
-
-The complete source code is also provided in the repository.
-
-Main source file:
-
-```text
-GPS_GNSS_Monitor.ino
-```
-
-### Requirements
-
-* Arduino IDE
-* M5Stack StickS3 board support
-* M5Unified library
-* M5GFX library
-* TinyGPSPlus library
-
-### Installation
-
-1. Install Arduino IDE.
-2. Open the `GPS_GNSS_Monitor.ino` file.
-3. Install the required libraries.
-4. Select the **M5StickS3** board.
-5. Connect the StickS3 using USB.
-6. Select the correct serial port.
-7. Compile and upload the firmware.
-8. Restart the device.
-9. Connect the GPS/GNSS module.
-10. Configure the GNSS baud rate if necessary.
-
-Official M5Stack Arduino documentation: [docs.m5stack.com/en/arduino/m5sticks3/program](https://docs.m5stack.com/en/arduino/m5sticks3/program)
-
----
-
-## 3. 🔥 Install Using M5Burner
-
-The **GPS & GNSS Monitor** firmware is also available directly through **M5Burner**, making it easy to install the firmware on your StickS3 without manually downloading the firmware file.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-gps-gnss-monitor.webp" alt="GPS & GNSS Monitor Screens" width="70%">
-</p>
-
-### Access the Firmware
-
-You can access the firmware in either of the following ways:
-
-* Visit [burner.m5stack.com](https://burner.m5stack.com/), select **StickS3**, and search for `GPS & GNSS Monitor`.
-* Open the firmware directly through this link: [https://burner.m5stack.com/A8XVKK](https://burner.m5stack.com/A8XVKK).
+- Visit [burner.m5stack.com](https://burner.m5stack.com/), select **StickS3**, and search for `GPS & GNSS Monitor`.
+- Open the firmware directly through this link: [https://burner.m5stack.com/A8XVKK](https://burner.m5stack.com/A8XVKK).
 
 > **💡 Recommendation:** For the best experience when using M5Burner, I recommend using **Google Chrome**.
 
-### Installing the Firmware with M5Burner
+#### Put the StickS3 into programming mode
 
-1. Put the StickS3 into **programming mode** by pressing and holding the **Power** button until the indicator light starts blinking.
-2. Connect the **StickS3** to your computer using a **USB cable**.
-3. Open [M5Burner](https://burner.m5stack.com/) using **Google Chrome**.
-4. Select **StickS3** and search for **GPS & GNSS Monitor**, or open the [direct firmware page](https://burner.m5stack.com/85KU9L).
-5. Follow the M5Burner instructions to select the StickS3 and upload the firmware.
-6. Wait for the installation to complete. Once finished, the StickS3 will be ready to use with the **GPS & GNSS Monitor** firmware.
+1. Press and hold the StickS3 **Power** button.
+2. Keep holding it until the indicator LED starts blinking.
+3. The device is now in download/programming mode.
+
+#### Flash the firmware
+
+1. Connect the StickS3 to your computer with a USB cable.
+2. Keep the StickS3 in programming mode.
+3. On the M5Burner page, select the correct connected device/serial port when prompted.
+4. Follow M5Burner's on-screen instructions to upload the firmware.
+5. Wait for the process to complete.
+6. Restart the StickS3 if it does not restart automatically.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-1.webp" alt="Step 1" width="70%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-1.webp" alt="M5Burner installation step 1" width="50%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-2.webp" alt="M5Burner installation step 2" width="50%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-3.webp" alt="M5Burner installation step 3" width="50%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-4.webp" alt="M5Burner installation step 4" width="50%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-5.webp" alt="M5Burner installation step 5" width="50%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-6.webp" alt="M5Burner installation step 6" width="50%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-7.webp" alt="M5Burner installation step 7" width="50%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-8.webp" alt="M5Burner installation step 8" width="50%">
 </p>
+
+### 2. Install using the `.bin` firmware file
+
+This method uses [Espressif ESP Tool JS](https://espressif.github.io/esptool-js/), a browser-based flashing tool. 
+
+> Google Chrome is recommended because it generally offers good Web Serial support.
+
+#### Put the StickS3 into programming mode
+
+1. Press and hold the **Power** button.
+2. Keep holding it until the indicator LED starts blinking.
+3. Connect the StickS3 to your computer using USB.
+
+#### Flash the `.bin` file
+
+1. Download `GPS_GNSS_Monitor.bin` from this repository's.
+2. Open [ESP Tool JS](https://espressif.github.io/esptool-js/) in Google Chrome.
+3. Set the flashing baud rate to `115200`.
+4. Connect to the StickS3 and select its COM/serial port.
+5. Select `GPS_GNSS_Monitor.bin` as the firmware file.
+6. Set **Flash Address** to `0x0`.
+7. Set **Flash Mode** to `dio`.
+8. Set **Flash Frequency** to `80m`.
+9. Set **Flash Size** to `8MB`.
+10. Start flashing and wait until the tool reports completion.
+11. Restart the StickS3.
+
+#### Use these ESP Tool JS settings:
+
+| ESP Tool JS setting | Value |
+|---|---|
+| Baud rate | `115200` |
+| Flash Address | `0x0` |
+| Flash Mode | `dio` |
+| Flash Frequency | `80m` |
+| Flash Size | `8MB` |
+
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-2.webp" alt="Step 2" width="70%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/esptool-1.png" alt="ESP Tool JS setup" width="70%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/esptool-2.png" alt="ESP Tool JS firmware selection" width="70%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/esptool-3.png" alt="ESP Tool JS flashing settings" width="70%">
 </p>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-3.webp" alt="Step 3" width="70%">
-</p>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-4.webp" alt="Step 4" width="70%">
-</p>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-5.webp" alt="Step 5" width="70%">
-</p>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-6.webp" alt="Step 6" width="70%">
-</p>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-7.webp" alt="Step 7" width="70%">
-</p>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/m5burner-installation-steps/m5burner-installation-steps-8.webp" alt="Step 8" width="70%">
-</p>
+
+### 3. Install and upload using Arduino IDE
+
+Use this method if you want to compile the source code yourself or modify the firmware.
+
+#### Requirements
+
+- [Arduino IDE](https://www.arduino.cc/en/software)
+- M5Stack board support for the **M5StickS3**
+- `M5Unified` library
+- `M5GFX` library
+- `TinyGPSPlus` library
+
+#### Installation and upload
+
+1. Install Arduino IDE.
+2. Download or clone this repository to your computer.
+3. Open `GPS_GNSS_Monitor.ino` in Arduino IDE.
+4. Install the required libraries through Arduino IDE's Library Manager if they are not already installed.
+5. Install the appropriate M5Stack board support and select **M5StickS3** as the board.
+6. Connect the StickS3 to your computer with USB.
+7. Select the serial port corresponding to the StickS3.
+8. Compile the sketch to check for errors.
+9. Upload the firmware to the device.
+10. Restart the StickS3 if necessary.
+11. Connect the GPS/GNSS module and configure the module's baud rate and UART GPIOs in **Basic Settings** so they match the module and wiring.
+
+See the official [M5StickS3 Arduino programming documentation](https://docs.m5stack.com/en/arduino/m5sticks3/program) for board setup and upload guidance.
 
 ---
 
-# 🦈 Bruce Firmware with GPS Info
+## 🦈 Bruce Firmware with GPS/GNSS Information
 
-I also made available a **modified version of the Bruce firmware** that adds a dedicated: GPS Info screen.
+I also modified the **Bruce** firmware to add a dedicated GPS Info screen that displays additional data received from a connected GPS/GNSS module. This modified version also supports changing measurement units and saving GPS/GNSS information to **LittleFS** or a **memory card**, where supported by the hardware and firmware setup.
 
-This screen provides several pieces of information received from the connected GPS/GNSS module and can be useful for users who want to inspect GNSS information while using Bruce.
+If you are interested in this alternative firmware, visit the repository:
 
-If you are interested in installing this modified Bruce firmware, check the repository:
-[github.com/viniciushnf/StickS3-GPS-GNSS](https://github.com/viniciushnf/StickS3-GPS-GNSS)
-
----
-
-# 👋 Get in touch
-
-If you build this project, I'd love to see the result! 
-
-If you have any questions, suggestions, or run into any issues, feel free to contact me on Instagram. 
-
-I'm always happy to help, receive feedback, and see what the community creates. 
-
-I'm also open to collaborations and partnership opportunities related to electronics, embedded systems, and open-source projects.
-
-* Instagram: **@viniciushnf**
-* [instagram.com/viniciushnf](https://www.instagram.com/viniciushnf/)
+**[github.com/viniciushnf/StickS3-GPS-GNSS](https://github.com/viniciushnf/StickS3-GPS-GNSS)**
 
 ---
 
-## ⭐ If You Find This Project Useful
+## 👋 Questions, Suggestions, and Project Sharing
 
-If this project helps you turn your StickS3 into a practical GPS/GNSS device, consider giving the repository a ⭐ on GitHub.
+If you have questions, suggestions, or encounter a problem, feel free to contact me on Instagram. If you build this project and want to share your result, I would be very happy to see it!
 
-Enjoy experimenting with GPS and GNSS!
+- **Instagram:** [@viniciushnf](https://www.instagram.com/viniciushnf/)
 
----
+Feedback, project photos, and suggestions are welcome.
 
-# 🙏 Acknowledgments
-
-Special thanks to **REYAX** for providing the **RYS352A GNSS module** used during the development and testing of this project.
-
-Thank you for supporting the project and for providing a module that performed very well during testing.
+If you find this project useful, consider giving the repository a ⭐ on GitHub. Enjoy experimenting with GPS and GNSS!
 
 ---
 
-# 📄 License
+## 📄 License
 
 This project is released under the **MIT License**.
