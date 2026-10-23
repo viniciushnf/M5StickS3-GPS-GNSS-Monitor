@@ -34,7 +34,7 @@ The firmware has main monitoring screens and a separate Settings menu. Button B 
 ### Main monitoring screens
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens.gif" alt="Main firmware screens" width="70%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens.gif" alt="Main firmware screens" width="50%">
 </p>
 
 | Screen | Description |
@@ -65,7 +65,7 @@ The firmware has main monitoring screens and a separate Settings menu. Button B 
 The Settings menu lets you customize the display, communication, measurement formats, and trip tracking.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-settings.gif" alt="Settings screens" width="70%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-settings.gif" alt="Settings screens" width="50%">
 </p>
 
 | Setting | Description |
