@@ -239,8 +239,8 @@ Available options are **Disabled**, **5 seconds**, **15 seconds**, **30 seconds*
 The warning does not stop the firmware. Press **Button A** to dismiss it. Choosing **Disabled** hides the warning; it does not disable the firmware's handling of GPS/GNSS communication.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screen-warning.jpg" alt="Communication Warning screen" width="50%">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screen-general-warning.jpg" alt="Communication Warning on General screen" width="50%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screen-warning.jpg" alt="Communication Warning screen" width="40%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screen-general-warning.jpg" alt="Communication Warning on General screen" width="40%">
 </p>
 
 ### ➡️ Course is direction of travel, not a compass
