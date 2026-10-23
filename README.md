@@ -141,7 +141,9 @@ The firmware calculates several useful trip values from the data received from t
 - **Minimum and Maximum Altitude:** records the minimum and maximum altitude values tracked for the current trip.
 - **Speed indicator bar:** on the second Route Stats portrait view, the indicator compares current speed with the recorded minimum, average, and maximum speeds. Its position varies between the minimum and maximum values, with the average represented around the middle reference point.
 
-<img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/route-stats-speed.gif" alt="Speed indicator bar" width="30%">
+<p align="center">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/route-stats-speed.gif" alt="Speed indicator bar" width="30%">
+</p>
 
 These values are **estimates, not precision surveying measurements**. GNSS positions naturally fluctuate, and accuracy depends on the receiver, antenna, satellite geometry, signal quality, surroundings, obstructions, and other conditions. Small position errors can affect accumulated route distance and other statistics. The Min. Trip Speed threshold can reduce unwanted movement detection while stationary, but it cannot eliminate every source of error.
 
