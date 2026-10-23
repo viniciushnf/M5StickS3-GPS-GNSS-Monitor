@@ -109,7 +109,7 @@ The Settings menu lets you customize the display, communication, measurement for
 `WHITE`, `BLACK`, `RED`, `GREEN`, `BLUE`, `YELLOW`, `CYAN`, `MAGENTA`, `ORANGE`, `PURPLE`, `PINK`, `NAVY`, `BROWN`, `GRAY`
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-general-colors.gif" alt="Screen Colors" width="70%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-general-colors.gif" alt="Screen Colors" width="40%">
 </p>
 
 The theme and background colors cannot be set to the same color, which helps keep the screen readable.
