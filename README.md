@@ -131,8 +131,8 @@ Both **General** and **Route Stats** include portrait-oriented layouts in additi
 General has four layouts in total: one landscape layout and three portrait layouts. Route Stats has three layouts: one landscape layout and two portrait layouts.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-general.gif" alt="General screen layouts" width="30%">
-  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-route-stats.gif" alt="Route Stats screen layouts" width="30%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-general.gif" alt="General screen layouts" width="25%">
+  <img src="https://raw.githubusercontent.com/viniciushnf/M5StickS3-GPS-GNSS-Monitor/refs/heads/main/images/screens-route-stats.gif" alt="Route Stats screen layouts" width="25%">
 </p>
 
 ### ➡️ Trip and route statistics are estimates
