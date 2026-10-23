@@ -462,7 +462,7 @@ This method uses [Espressif ESP Tool JS](https://espressif.github.io/esptool-js/
 #### Flash the `.bin` file
 
 1. Download `GPS_GNSS_Monitor.bin` from this repository's.
-2. Open [ESP Tool JS](https://espressif.github.io/esptool-js/) in Google Chrome.
+2. Open ESP Tool JS: [espressif.github.io/esptool-js/](https://espressif.github.io/esptool-js/).
 3. Set the flashing baud rate to `115200`.
 4. Connect to the StickS3 and select its COM/serial port.
 5. Select `GPS_GNSS_Monitor.bin` as the firmware file.
