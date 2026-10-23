@@ -44,11 +44,12 @@ The firmware has main monitoring screens and a separate Settings menu. Button B 
 | **Speed** | Shows the speed reported by the GPS/GNSS module, using the selected speed unit, and includes Position Quality. |
 | **Altitude** | Shows the altitude reported by the module using meters or feet, and includes Position Quality. |
 | **Distance** | Shows the straight-line distance between the trip starting position and the current position. This is not the accumulated distance along the route. |
-| **Route Stats** | Shows accumulated route distance, average moving speed, minimum and maximum speed, minimum and maximum altitude, and time in motion. It has one landscape view and two portrait views. |
+| **Route Stats** | Shows accumulated route distance, average moving speed, minimum and maximum speed, and time in motion. It has one landscape view and two portrait views. |
 | **Course** | Shows the direction of travel calculated from GPS/GNSS course data. Course is based on movement, not a magnetic compass. |
 | **Time** | Shows the date and time received from the module, adjusted using the configured timezone. |
 | **Session Info** | Shows Time in Motion, Trip Time, and Fix Time. |
 | **About** | Shows firmware information, including the version, selected RX/TX GPIOs, and baud rate. Button A switches to a second view with developer information and the GitHub repository link. |
+| **Settings** | Allows access to the settings screens. |
 
 #### Navigating the main screens
 
@@ -295,7 +296,7 @@ The firmware also handles date changes when the time adjusted to the selected ti
 | `3.0 to < 5.0` | Poor |
 | `≥ 5.0` | Very Poor |
 
-If a valid HDOP value has not yet been obtained, the firmware displays **No Fix**. Position Quality appears on the **General**, **Position**, **Speed**, and **Altitude** screens where applicable to the displayed layout.
+If a valid HDOP value has not yet been obtained, the firmware displays **No Fix**. Position Quality appears on the **Position**, **Speed**, and **Altitude** screens where applicable to the displayed layout.
 
 ### ➡️ NVS: saving configuration
 
