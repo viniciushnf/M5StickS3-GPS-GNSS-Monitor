@@ -82,7 +82,7 @@ Version 1.1 expands the display options and improves how key navigation informat
 
 Version 1.0 established the core GPS & GNSS Monitor firmware for the M5StickS3. It receives GNSS data from a compatible module over UART and presents navigation and receiver information through the device's screen-based interface.
 
-**Version released on:** September 6, 2026.
+**Version released on:** August 20, 2026.
 
 #### Included features
 
